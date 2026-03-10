@@ -12,6 +12,7 @@ from app.core.database import Base
 
 
 class DataCategory(str, enum.Enum):
+    # General categories
     PII = "pii"
     FINANCIAL = "financial"
     HEALTH = "health"
@@ -20,6 +21,20 @@ class DataCategory(str, enum.Enum):
     BUSINESS_CONFIDENTIAL = "business_confidential"
     CONTRACTS = "contracts"
     HR_PAYROLL = "hr_payroll"
+    # DevOps / Code repository secrets
+    PRIVATE_KEY = "private_key"
+    GCP_SERVICE_ACCOUNT_KEY = "gcp_service_account_key"
+    AZURE_CLIENT_SECRET = "azure_client_secret"
+    GITHUB_TOKEN = "github_token"
+    SLACK_TOKEN = "slack_token"
+    JWT_TOKEN = "jwt_token"
+    DATABASE_CONNECTION_STRING = "database_connection_string"
+    SSH_KEY = "ssh_key"
+    CERTIFICATE = "certificate"
+    # Global PII
+    SSN = "ssn"
+    PHONE_NUMBER = "phone_number"
+    DATE_OF_BIRTH = "date_of_birth"
     # India-specific
     PAN = "pan"
     AADHAAR = "aadhaar"

@@ -386,12 +386,17 @@ Before running a scan, verify the connection:
 
 | Category | Data Sources |
 |----------|-------------|
-| **Cloud Storage** | AWS S3, Azure Blob Storage, Google Cloud Storage |
-| **Relational Databases** | PostgreSQL, MySQL, MS SQL Server, Oracle, MariaDB |
-| **NoSQL Databases** | MongoDB |
-| **Data Warehouses** | Snowflake, BigQuery, Redshift, Databricks |
-| **SaaS Applications** | Microsoft 365, Google Workspace, Slack, Jira, Confluence, Salesforce |
-| **File Systems** | HDFS, SMB/NFS shares, Local FS |
+| **Cloud Storage** | AWS S3, Azure Blob Storage, Azure Data Lake (ADLS), Google Cloud Storage, OneDrive, SharePoint Online, Google Drive, Box, Dropbox, Egnyte |
+| **Relational Databases** | PostgreSQL, MySQL, MS SQL Server, Oracle, MariaDB, IBM Db2 |
+| **NoSQL Databases** | MongoDB, Cassandra |
+| **Data Warehouses** | Snowflake, BigQuery, Redshift, Azure Synapse Analytics, Databricks |
+| **SaaS / Collaboration** | Microsoft 365, Microsoft Teams, Google Workspace, Gmail, Slack, Jira, Confluence, Salesforce |
+| **On-Prem Storage** | HDFS, SMB/NFS shares, Local FS, On-Prem SharePoint |
+| **Cloud Infrastructure** | AWS (IAM Role), Azure Subscription, Google Cloud Platform |
+| **Identity & Access** | Azure Active Directory, AWS IAM, Google IAM, LDAP, Microsoft Active Directory, Okta, Ping Identity |
+| **DevOps / Code Repos** | GitHub, GitLab, Bitbucket, Azure DevOps |
+| **Security Platforms** | Forcepoint DLP, Splunk SIEM, IBM QRadar, SOAR, CASB |
+| **Backup & Snapshot** | AWS EBS Snapshots, Azure VM Snapshots, Backup Repositories, Archive Storage (Glacier) |
 
 ---
 
@@ -773,9 +778,20 @@ The platform includes 15+ built-in classification rules:
 | Bank Account | 9–18 digit numbers | Confidential |
 | CIN (Company) | `[UL][0-9]{5}[A-Z]{2}...` | Confidential |
 | PII (Email) | Standard email pattern | Confidential |
+| US SSN | `XXX-XX-XXXX` pattern | Confidential |
+| Phone Number | International phone format | Confidential |
 | Financial (Cards) | Visa, MasterCard, Amex patterns | Confidential |
 | Auth Secrets | `password=`, `api_key=` patterns | Confidential |
 | Source Code Secrets | AWS `AKIA` key prefix | Confidential |
+| Private Key | `-----BEGIN PRIVATE KEY-----` | Restricted |
+| GCP Service Account | `"type": "service_account"` in JSON | Restricted |
+| Azure Client Secret | `client_secret=` or env var patterns | Restricted |
+| GitHub Token | `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_` prefixes | Restricted |
+| Slack Token | `xoxb-`, `xoxp-`, `xoxa-` prefixes | Restricted |
+| JWT Token | `eyJ...` three-segment Base64 pattern | Confidential |
+| Database Connection String | `postgresql://`, `mongodb://` etc. | Restricted |
+| SSH Key | `-----BEGIN OPENSSH PRIVATE KEY-----` | Restricted |
+| Certificate | `-----BEGIN CERTIFICATE-----` | Confidential |
 
 **Custom rules** can be created with:
 - **Regex** patterns for structured data

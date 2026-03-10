@@ -13,8 +13,9 @@ from app.models.classification import (
 )
 
 
-# Built-in regex patterns for Indian and common data types
+# Built-in regex patterns for Indian, global, and DevOps data types
 BUILTIN_PATTERNS = {
+    # ── India-specific identifiers ──
     DataCategory.PAN: r"\b[A-Z]{5}[0-9]{4}[A-Z]\b",
     DataCategory.AADHAAR: r"\b[2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4}\b",
     DataCategory.GSTIN: r"\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}\b",
@@ -25,10 +26,26 @@ BUILTIN_PATTERNS = {
     DataCategory.UPI_ID: r"\b[a-zA-Z0-9._-]+@[a-zA-Z]{2,}\b",
     DataCategory.BANK_ACCOUNT: r"\b[0-9]{9,18}\b",
     DataCategory.CIN: r"\b[UL][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}\b",
-    DataCategory.PII: r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",  # email as example
+    # ── Global PII ──
+    DataCategory.PII: r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",  # email
+    DataCategory.SSN: r"\b\d{3}-\d{2}-\d{4}\b",  # US Social Security Number
+    DataCategory.PHONE_NUMBER: r"\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b",
+    DataCategory.DATE_OF_BIRTH: r"\b(?:DOB|date[_\s]?of[_\s]?birth)\s*[:=]\s*\d{1,4}[-/]\d{1,2}[-/]\d{1,4}\b",
+    # ── Financial ──
     DataCategory.FINANCIAL: r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b",  # card numbers
+    # ── Auth & secrets (generic) ──
     DataCategory.AUTH_SECRETS: r"(?:password|secret|token|api[_-]?key)\s*[:=]\s*['\"][^'\"]{8,}['\"]",
-    DataCategory.SOURCE_CODE_SECRETS: r"(?:AKIA|ABIA|ACCA|ASIA)[0-9A-Z]{16}",  # AWS key pattern
+    # ── Source code / DevOps secrets ──
+    DataCategory.SOURCE_CODE_SECRETS: r"(?:AKIA|ABIA|ACCA|ASIA)[0-9A-Z]{16}",  # AWS access key
+    DataCategory.PRIVATE_KEY: r"-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----",
+    DataCategory.GCP_SERVICE_ACCOUNT_KEY: r'"type"\s*:\s*"service_account"',
+    DataCategory.AZURE_CLIENT_SECRET: r"(?:client_secret|AZURE_CLIENT_SECRET)\s*[:=]\s*['\"][A-Za-z0-9~._-]{30,}['\"]",
+    DataCategory.GITHUB_TOKEN: r"\b(?:ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|ghu_[A-Za-z0-9]{36}|ghs_[A-Za-z0-9]{36}|ghr_[A-Za-z0-9]{36})\b",
+    DataCategory.SLACK_TOKEN: r"\bxox[bporas]-[0-9]{10,13}-[A-Za-z0-9-]{20,}\b",
+    DataCategory.JWT_TOKEN: r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b",
+    DataCategory.DATABASE_CONNECTION_STRING: r"(?:mysql|postgresql|mongodb|mssql|oracle|redis)://[^\s'\"]{10,}",
+    DataCategory.SSH_KEY: r"-----BEGIN (?:OPENSSH )?PRIVATE KEY-----",
+    DataCategory.CERTIFICATE: r"-----BEGIN CERTIFICATE-----",
 }
 
 

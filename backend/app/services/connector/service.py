@@ -1,10 +1,7 @@
 """Connector & Ingestion Engine service (Module 3.1)."""
 
-import ipaddress
 import logging
-import socket
 from typing import Optional
-from urllib.parse import urlparse
 from uuid import UUID
 
 from sqlalchemy import select
@@ -15,38 +12,16 @@ from app.models.connector import (
     Connector, ConnectorCredential, ConnectorSyncLog, ConnectorStatus,
 )
 from app.schemas.connector import ConnectorCreate, ConnectorUpdate
+from app.services.connector.handlers import (
+    BaseConnectorHandler,
+    ConnectorHandlerFactory,
+    _is_internal_address,
+)
 
 logger = logging.getLogger(__name__)
 
 # Allowlisted fields for connector updates (prevents mass assignment)
 _UPDATABLE_FIELDS = {"name", "config", "scan_scope", "schedule_cron", "incremental_sync", "timeout_seconds", "retry_count", "enabled"}
-
-
-def _is_internal_address(host: str) -> bool:
-    """Block SSRF by rejecting internal/private/reserved IP addresses and hostnames."""
-    try:
-        # Resolve hostname to IP
-        resolved = socket.getaddrinfo(host, None)
-        for _, _, _, _, sockaddr in resolved:
-            ip = ipaddress.ip_address(sockaddr[0])
-            if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
-                return True
-    except (socket.gaierror, ValueError):
-        pass
-
-    # Block metadata endpoints
-    blocked_hosts = {"169.254.169.254", "metadata.google.internal", "metadata.internal"}
-    if host.lower() in blocked_hosts:
-        return True
-
-    return False
-
-
-def _sanitize_error(e: Exception) -> str:
-    """Return a generic error message — never expose raw exception details."""
-    logger.error("Connector error: %s", str(e), exc_info=True)
-    error_type = type(e).__name__
-    return f"Connection failed ({error_type}). Check credentials and network configuration."
 
 
 class ConnectorService:
@@ -144,92 +119,3 @@ class ConnectorService:
             "last_error": connector.last_error,
             "is_healthy": connector.status == ConnectorStatus.CONNECTED,
         }
-
-
-class BaseConnectorHandler:
-    """Base class for connector-specific handlers."""
-
-    async def test_connection(self, config: dict, credentials: dict) -> dict:
-        raise NotImplementedError
-
-    async def list_assets(self, config: dict, credentials: dict) -> list:
-        raise NotImplementedError
-
-    async def fetch_metadata(self, config: dict, credentials: dict, asset_path: str) -> dict:
-        raise NotImplementedError
-
-
-class AWSS3Handler(BaseConnectorHandler):
-    async def test_connection(self, config: dict, credentials: dict) -> dict:
-        try:
-            import boto3
-            session = boto3.Session(
-                aws_access_key_id=credentials.get("access_key"),
-                aws_secret_access_key=credentials.get("secret_key"),
-                region_name=config.get("region", "us-east-1"),
-            )
-            s3 = session.client("s3")
-            s3.list_buckets()
-            return {"success": True, "message": "Connected to AWS S3 successfully"}
-        except Exception as e:
-            return {"success": False, "message": _sanitize_error(e)}
-
-
-class AzureBlobHandler(BaseConnectorHandler):
-    async def test_connection(self, config: dict, credentials: dict) -> dict:
-        try:
-            from azure.storage.blob import BlobServiceClient
-            connection_string = credentials.get("connection_string")
-            client = BlobServiceClient.from_connection_string(connection_string)
-            list(client.list_containers(max_results=1))
-            return {"success": True, "message": "Connected to Azure Blob Storage successfully"}
-        except Exception as e:
-            return {"success": False, "message": _sanitize_error(e)}
-
-
-class GCSHandler(BaseConnectorHandler):
-    async def test_connection(self, config: dict, credentials: dict) -> dict:
-        try:
-            from google.cloud import storage
-            client = storage.Client(project=config.get("project_id"))
-            list(client.list_buckets(max_results=1))
-            return {"success": True, "message": "Connected to Google Cloud Storage successfully"}
-        except Exception as e:
-            return {"success": False, "message": _sanitize_error(e)}
-
-
-class PostgreSQLHandler(BaseConnectorHandler):
-    async def test_connection(self, config: dict, credentials: dict) -> dict:
-        host = config.get("host", "")
-        if _is_internal_address(host):
-            return {"success": False, "message": "Connection to internal/private addresses is not allowed"}
-        try:
-            import asyncpg
-            conn = await asyncpg.connect(
-                host=host,
-                port=config.get("port", 5432),
-                user=credentials.get("username"),
-                password=credentials.get("password"),
-                database=config.get("database"),
-            )
-            await conn.execute("SELECT 1")
-            await conn.close()
-            return {"success": True, "message": "Connected to PostgreSQL successfully"}
-        except Exception as e:
-            return {"success": False, "message": _sanitize_error(e)}
-
-
-class ConnectorHandlerFactory:
-    _handlers = {
-        "aws_s3": AWSS3Handler,
-        "azure_blob": AzureBlobHandler,
-        "gcs": GCSHandler,
-        "postgresql": PostgreSQLHandler,
-    }
-
-    @classmethod
-    def get_handler(cls, connector_type: str) -> BaseConnectorHandler:
-        handler_class = cls._handlers.get(connector_type)
-        if not handler_class:
-            return BaseConnectorHandler()
-        return handler_class()

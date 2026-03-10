@@ -15,34 +15,84 @@ from app.core.database import Base
 
 
 class ConnectorType(str, enum.Enum):
-    # Cloud Storage
+    # ── Cloud Storage ──
     AWS_S3 = "aws_s3"
     AZURE_BLOB = "azure_blob"
+    ADLS = "adls"
     GCS = "gcs"
-    # Databases
+    ONEDRIVE = "onedrive"
+    SHAREPOINT_ONLINE = "sharepoint_online"
+    GOOGLE_DRIVE = "google_drive"
+    BOX = "box"
+    DROPBOX = "dropbox"
+    EGNYTE = "egnyte"
+
+    # ── Databases ──
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
     MSSQL = "mssql"
     MONGODB = "mongodb"
     ORACLE = "oracle"
     MARIADB = "mariadb"
-    # Data Warehouses / Lakes
+    DB2 = "db2"
+    CASSANDRA = "cassandra"
+
+    # ── Data Warehouses / Lakes ──
     SNOWFLAKE = "snowflake"
     BIGQUERY = "bigquery"
     REDSHIFT = "redshift"
+    AZURE_SYNAPSE = "azure_synapse"
     DATABRICKS = "databricks"
     HDFS = "hdfs"
-    # SaaS
+
+    # ── SaaS / Collaboration ──
     MICROSOFT_365 = "microsoft_365"
     GOOGLE_WORKSPACE = "google_workspace"
+    MICROSOFT_TEAMS = "microsoft_teams"
+    GMAIL = "gmail"
     SLACK = "slack"
     JIRA = "jira"
     CONFLUENCE = "confluence"
     SALESFORCE = "salesforce"
-    # On-Prem
+
+    # ── On-Prem Storage ──
     SMB = "smb"
     NFS = "nfs"
     LOCAL_FS = "local_fs"
+    ON_PREM_SHAREPOINT = "on_prem_sharepoint"
+
+    # ── Cloud Infrastructure ──
+    AWS_CLOUD = "aws_cloud"
+    AZURE_SUBSCRIPTION = "azure_subscription"
+    GCP_CLOUD = "gcp_cloud"
+
+    # ── Identity & Access Management ──
+    AZURE_AD = "azure_ad"
+    AWS_IAM = "aws_iam"
+    GOOGLE_IAM = "google_iam"
+    LDAP = "ldap"
+    MICROSOFT_AD = "microsoft_ad"
+    OKTA = "okta"
+    PING_IDENTITY = "ping_identity"
+
+    # ── DevOps & Code Repositories ──
+    GITHUB = "github"
+    GITLAB = "gitlab"
+    BITBUCKET = "bitbucket"
+    AZURE_DEVOPS = "azure_devops"
+
+    # ── Security Platform Integrations ──
+    FORCEPOINT_DLP = "forcepoint_dlp"
+    SPLUNK = "splunk"
+    QRADAR = "qradar"
+    GENERIC_SOAR = "generic_soar"
+    GENERIC_CASB = "generic_casb"
+
+    # ── Backup & Snapshot ──
+    AWS_EBS_SNAPSHOT = "aws_ebs_snapshot"
+    AZURE_VM_SNAPSHOT = "azure_vm_snapshot"
+    BACKUP_REPOSITORY = "backup_repository"
+    ARCHIVE_STORAGE = "archive_storage"
 
 
 class CredentialType(str, enum.Enum):
