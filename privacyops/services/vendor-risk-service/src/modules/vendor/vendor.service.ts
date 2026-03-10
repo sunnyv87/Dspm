@@ -71,7 +71,7 @@ export class VendorService {
 
     if (query.search) {
       qb.andWhere('(vendor.name ILIKE :search OR vendor.description ILIKE :search)', {
-        search: `%${query.search}%`,
+        search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`,
       });
     }
 

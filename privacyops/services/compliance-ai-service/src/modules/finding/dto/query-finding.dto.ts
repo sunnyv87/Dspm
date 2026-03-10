@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsNumber, Min, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNumber, Min, IsUUID, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { FindingStatus, FindingSeverity } from '../../../entities/compliance-finding.entity';
@@ -32,6 +32,7 @@ export class QueryFindingDto {
   @ApiPropertyOptional({ description: 'Search by control name or description' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Page number', default: 1 })

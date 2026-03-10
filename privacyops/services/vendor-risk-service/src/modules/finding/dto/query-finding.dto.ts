@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsUUID, IsNumber, Min } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsUUID, IsNumber, Min, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { FindingSeverity, FindingStatus } from '../../../entities/risk-finding.entity';
@@ -32,6 +32,7 @@ export class QueryFindingDto {
   @ApiPropertyOptional({ description: 'Search by title' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Page number', default: 1 })

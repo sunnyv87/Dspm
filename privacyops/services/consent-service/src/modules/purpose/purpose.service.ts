@@ -74,7 +74,7 @@ export class PurposeService {
 
     if (query.search) {
       qb.andWhere('(purpose.name ILIKE :search OR purpose.description ILIKE :search)', {
-        search: `%${query.search}%`,
+        search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`,
       });
     }
 

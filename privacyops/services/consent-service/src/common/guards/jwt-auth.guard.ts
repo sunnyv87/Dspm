@@ -94,7 +94,9 @@ export class JwtAuthGuard implements CanActivate {
       .update(signatureInput)
       .digest('base64url');
 
-    if (signatureB64 !== expectedSignature) {
+    const sigBuf = Buffer.from(signatureB64, 'base64url');
+    const expBuf = Buffer.from(expectedSignature, 'base64url');
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       throw new Error('Invalid token signature');
     }
 

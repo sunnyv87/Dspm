@@ -57,7 +57,7 @@ export class PolicyService {
 
     if (query.search) {
       qb.andWhere('(policy.name ILIKE :search OR policy.description ILIKE :search)', {
-        search: `%${query.search}%`,
+        search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`,
       });
     }
 

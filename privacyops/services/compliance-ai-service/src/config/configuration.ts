@@ -39,6 +39,7 @@ export interface DspmConfig {
   corsOrigins: string[];
   rateLimitWindowMs: number;
   rateLimitMax: number;
+  adapterServiceUrl: string;
 }
 
 export interface AppConfig {
@@ -94,5 +95,6 @@ export default (): AppConfig => ({
     corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(','),
     rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
     rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '60', 10),
+    adapterServiceUrl: process.env.DSPM_ADAPTER_SERVICE_URL || 'http://localhost:3004',
   },
 });

@@ -8,6 +8,7 @@ import {
   Min,
   Max,
   IsIn,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -57,6 +58,7 @@ export class QueryAuditDto {
   @ApiPropertyOptional({ description: 'Full-text search query' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Page number (1-based)', default: 1 })

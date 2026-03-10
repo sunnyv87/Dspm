@@ -29,7 +29,7 @@ export class ControlDefinitionDto {
 }
 
 export class CreateFrameworkDto {
-  @ApiProperty({ description: 'Framework name (e.g. GDPR, CCPA, HIPAA, SOC2, ISO27001, PCI_DSS)' })
+  @ApiProperty({ description: 'Framework name (e.g. ISO27701, GDPR, CCPA, HIPAA, SOC2, ISO27001, PCI_DSS). Use POST /seeds/:name to auto-populate pre-built frameworks.' })
   @IsString()
   @MaxLength(255)
   name: string;

@@ -109,7 +109,7 @@ export class AffectedService {
 
     if (query.search) {
       qb.andWhere('affected.subjectIdentifier ILIKE :search', {
-        search: `%${query.search}%`,
+        search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`,
       });
     }
 

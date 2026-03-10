@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsBoolean, IsNumber, Min } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsBoolean, IsNumber, Min, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { VendorCategory, RiskLevel, VendorStatus } from '../../../entities/vendor.entity';
@@ -7,6 +7,7 @@ export class QueryVendorDto {
   @ApiPropertyOptional({ description: 'Search by name (partial match)' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Filter by category', enum: VendorCategory })

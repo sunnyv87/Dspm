@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsNumber, Min, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNumber, Min, IsUUID, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ScanStatus, ScanType } from '../../../entities/compliance-scan.entity';
@@ -22,6 +22,7 @@ export class QueryScanDto {
   @ApiPropertyOptional({ description: 'Search by metadata or scope' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Page number', default: 1 })

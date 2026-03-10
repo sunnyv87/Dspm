@@ -68,7 +68,7 @@ export class ProcessingActivityService {
     }
     if (search) {
       qb.andWhere('(pa.name ILIKE :search OR pa.description ILIKE :search)', {
-        search: `%${search}%`,
+        search: `%${search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`,
       });
     }
 

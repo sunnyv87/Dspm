@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsInt, Min, IsBoolean } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsInt, Min, IsBoolean, MaxLength } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import {
   LawfulBasis,
@@ -44,6 +44,7 @@ export class QueryProcessingActivityDto {
 
   @ApiPropertyOptional()
   @IsString()
+  @MaxLength(100)
   @IsOptional()
   search?: string;
 }

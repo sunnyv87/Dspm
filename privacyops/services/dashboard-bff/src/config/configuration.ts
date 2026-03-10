@@ -5,7 +5,7 @@ export default () => ({
     secret: process.env.JWT_SECRET || 'default-secret-change-in-production',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   },
   kafka: {
     brokers: process.env.KAFKA_BROKERS || 'localhost:9092',

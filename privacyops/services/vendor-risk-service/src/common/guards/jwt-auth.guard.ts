@@ -40,7 +40,9 @@ export class JwtAuthGuard implements CanActivate {
     if (parts.length !== 3) throw new Error('Invalid token format');
     const [headerB64, payloadB64, signatureB64] = parts;
     const expectedSignature = crypto.createHmac('sha256', this.jwtSecret).update(`${headerB64}.${payloadB64}`).digest('base64url');
-    if (signatureB64 !== expectedSignature) throw new Error('Invalid token signature');
+    const sigBuf = Buffer.from(signatureB64, 'base64url');
+    const expBuf = Buffer.from(expectedSignature, 'base64url');
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) throw new Error('Invalid token signature');
     const payload: JwtPayload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) throw new Error('Token has expired');
     return payload;

@@ -57,7 +57,7 @@ export class FindingService {
     if (query.search) {
       qb.andWhere(
         '(finding.controlName ILIKE :search OR finding.description ILIKE :search)',
-        { search: `%${query.search}%` },
+        { search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%` },
       );
     }
 

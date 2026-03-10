@@ -89,7 +89,7 @@ export class DefinitionService {
     if (query.search) {
       qb.andWhere(
         '(def.name ILIKE :search OR def.description ILIKE :search)',
-        { search: `%${query.search}%` },
+        { search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%` },
       );
     }
 

@@ -75,7 +75,7 @@ export class FrameworkService {
     if (query.search) {
       qb.andWhere(
         '(framework.name ILIKE :search OR framework.description ILIKE :search)',
-        { search: `%${query.search}%` },
+        { search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%` },
       );
     }
 

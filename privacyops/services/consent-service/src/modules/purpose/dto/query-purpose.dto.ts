@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsBoolean, IsNumber, Min } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsBoolean, IsNumber, Min, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { LegalBasis } from '../../../entities/consent-purpose.entity';
@@ -7,6 +7,7 @@ export class QueryPurposeDto {
   @ApiPropertyOptional({ description: 'Filter by name (partial match)' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Filter by legal basis', enum: LegalBasis })

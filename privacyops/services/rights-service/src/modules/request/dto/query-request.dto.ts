@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsUUID, IsNumber, Min } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsUUID, IsNumber, Min, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { RequestType, RequestStatus, RequestPriority } from '../../../entities/rights-request.entity';
@@ -7,6 +7,7 @@ export class QueryRequestDto {
   @ApiPropertyOptional({ description: 'Search by description' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Filter by subject ID' })

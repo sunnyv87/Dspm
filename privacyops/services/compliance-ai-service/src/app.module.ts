@@ -12,6 +12,7 @@ import { ScanModule } from './modules/scan/scan.module';
 import { FindingModule } from './modules/finding/finding.module';
 import { FrameworkModule } from './modules/framework/framework.module';
 import { RemediationModule } from './modules/remediation/remediation.module';
+import { DspmIntegrationModule } from './modules/dspm-integration/dspm-integration.module';
 import { KafkaModule } from './common/kafka/kafka.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
@@ -63,6 +64,7 @@ import { RbacGuard } from './common/guards/rbac.guard';
     FindingModule,
     FrameworkModule,
     RemediationModule,
+    DspmIntegrationModule,
   ],
   providers: [
     // Global exception filter

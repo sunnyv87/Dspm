@@ -60,7 +60,7 @@ export class ReportService {
 
     if (query.search) {
       qb.andWhere('(report.name ILIKE :search OR report.description ILIKE :search)', {
-        search: `%${query.search}%`,
+        search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`,
       });
     }
 

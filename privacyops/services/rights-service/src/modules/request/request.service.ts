@@ -75,7 +75,7 @@ export class RequestService {
       .where('request.tenantId = :tenantId', { tenantId });
 
     if (query.search) {
-      qb.andWhere('request.description ILIKE :search', { search: `%${query.search}%` });
+      qb.andWhere('request.description ILIKE :search', { search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%` });
     }
 
     if (query.subjectId) {

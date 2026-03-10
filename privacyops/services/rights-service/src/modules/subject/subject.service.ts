@@ -69,7 +69,7 @@ export class SubjectService {
     if (query.search) {
       qb.andWhere(
         '(subject.email ILIKE :search OR subject.firstName ILIKE :search OR subject.lastName ILIKE :search)',
-        { search: `%${query.search}%` },
+        { search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%` },
       );
     }
 

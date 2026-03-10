@@ -96,7 +96,7 @@ export class IncidentService {
     if (query.search) {
       qb.andWhere(
         '(incident.title ILIKE :search OR incident.description ILIKE :search)',
-        { search: `%${query.search}%` },
+        { search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%` },
       );
     }
 

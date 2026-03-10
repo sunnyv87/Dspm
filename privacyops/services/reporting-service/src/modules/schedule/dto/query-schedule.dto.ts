@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsUUID, IsNumber, Min } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsUUID, IsNumber, Min, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ScheduledReportStatus } from '../../../entities/scheduled-report.entity';
@@ -17,6 +17,7 @@ export class QueryScheduleDto {
   @ApiPropertyOptional({ description: 'Search by name' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Page number', default: 1 })

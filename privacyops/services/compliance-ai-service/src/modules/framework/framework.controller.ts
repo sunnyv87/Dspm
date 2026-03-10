@@ -10,19 +10,25 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { FrameworkService } from './framework.service';
+import { FrameworkSeedService } from './framework-seed.service';
 import { CreateFrameworkDto } from './dto/create-framework.dto';
 import { QueryFrameworkDto } from './dto/query-framework.dto';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Frameworks')
 @ApiBearerAuth('bearer')
 @Controller('frameworks')
 export class FrameworkController {
-  constructor(private readonly frameworkService: FrameworkService) {}
+  constructor(
+    private readonly frameworkService: FrameworkService,
+    private readonly frameworkSeedService: FrameworkSeedService,
+  ) {}
 
   @Post()
   @Permissions('compliance.framework.manage')
@@ -84,5 +90,42 @@ export class FrameworkController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.frameworkService.delete(tenantId, id);
+  }
+
+  // ─── Seed Endpoints ──────────────────────────────────────────────
+
+  @Get('seeds/available')
+  @Public()
+  @ApiOperation({ summary: 'List available pre-built framework seeds (ISO 27701, GDPR, CCPA, HIPAA)' })
+  @ApiResponse({ status: 200, description: 'List of available framework seeds with control counts' })
+  getAvailableSeeds() {
+    return this.frameworkSeedService.getAvailableSeeds();
+  }
+
+  @Post('seeds/:frameworkName')
+  @Permissions('compliance.framework.manage')
+  @ApiOperation({ summary: 'Seed a pre-built framework (e.g. ISO27701, GDPR, CCPA, HIPAA) for the tenant' })
+  @ApiResponse({ status: 201, description: 'Framework seeded successfully with all controls' })
+  @ApiResponse({ status: 409, description: 'Framework already exists for this tenant' })
+  async seedFramework(
+    @TenantId() tenantId: string,
+    @Param('frameworkName') frameworkName: string,
+  ) {
+    try {
+      return await this.frameworkSeedService.seedFramework(tenantId, frameworkName);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Unknown framework')) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @Post('seeds')
+  @Permissions('compliance.framework.manage')
+  @ApiOperation({ summary: 'Seed all available pre-built frameworks for the tenant' })
+  @ApiResponse({ status: 201, description: 'All frameworks seeded (existing ones skipped)' })
+  async seedAllFrameworks(@TenantId() tenantId: string) {
+    return this.frameworkSeedService.seedAllFrameworks(tenantId);
   }
 }

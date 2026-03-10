@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsNumber, Min } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNumber, Min, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { SubjectType } from '../../../entities/data-subject.entity';
@@ -7,6 +7,7 @@ export class QuerySubjectDto {
   @ApiPropertyOptional({ description: 'Search by name or email' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Filter by subject type', enum: SubjectType })

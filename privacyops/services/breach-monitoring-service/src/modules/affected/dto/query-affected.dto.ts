@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsUUID, IsBoolean, IsNumber, Min } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsUUID, IsBoolean, IsNumber, Min, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -30,6 +30,7 @@ export class QueryAffectedDto {
   @ApiPropertyOptional({ description: 'Search by subject identifier' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   search?: string;
 
   @ApiPropertyOptional({ description: 'Page number', default: 1 })

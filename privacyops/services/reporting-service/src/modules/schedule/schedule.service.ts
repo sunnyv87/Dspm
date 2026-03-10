@@ -79,7 +79,7 @@ export class ScheduleService {
     }
 
     if (query.search) {
-      qb.andWhere('schedule.name ILIKE :search', { search: `%${query.search}%` });
+      qb.andWhere('schedule.name ILIKE :search', { search: `%${query.search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%` });
     }
 
     qb.orderBy('schedule.createdAt', 'DESC').skip(skip).take(limit);
