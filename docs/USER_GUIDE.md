@@ -70,6 +70,7 @@
     - [Follow-Up Queries](#135-follow-up-queries)
 14. [Keyboard Shortcuts & Tips](#14-keyboard-shortcuts--tips)
 15. [Troubleshooting](#15-troubleshooting)
+16. [Appendix A: Connector Configuration Reference](#appendix-a-connector-configuration-reference)
 
 ---
 
@@ -357,6 +358,8 @@ Navigate to **Connectors** in the sidebar to see all configured data sources.
 | Azure Blob | `storage_account`, `container` | `{"storage_account": "myaccount"}` |
 | Google Workspace | `domain`, `admin_email` | `{"domain": "company.com"}` |
 | Snowflake | `account`, `warehouse`, `database` | `{"account": "xy12345.ap-south-1"}` |
+
+> For a complete configuration reference for **all 59 connector types**, see [Appendix A: Connector Configuration Reference](#appendix-a-connector-configuration-reference) at the end of this guide.
 
 ### 3.3 Testing Connectivity
 
@@ -1303,4 +1306,1339 @@ This guided flow helps CISOs drill down from high-level posture to specific issu
 
 ---
 
-*TechD DSPM v1.0 — Securing your data, one posture at a time.*
+*TechD DSPM v1.1 — Securing your data, one posture at a time.*
+
+---
+
+## Appendix A: Connector Configuration Reference
+
+Complete configuration reference for all **59 connector types** across 10 categories. Each entry shows the connector type string (used in API calls), required config fields, required credentials, and what the connector discovers.
+
+---
+
+### A.1 Cloud Storage Connectors (10 types)
+
+These connectors scan unstructured files, objects, and storage buckets.
+
+#### AWS S3
+
+| Field | Value |
+|-------|-------|
+| **Type** | `aws_s3` |
+| **Credential Type** | `iam_role` or `api_key` |
+| **Config** | `region` (string, default: `us-east-1`) |
+| **Credentials** | `access_key`, `secret_key` — or use IAM role ARN |
+| **Discovers** | Buckets, objects, metadata, ACLs, encryption status |
+| **Scans** | Object content (first 64KB per file, samples from each bucket) |
+
+```json
+{
+  "config": { "region": "ap-south-1" },
+  "credentials": [
+    { "key_name": "access_key", "value": "AKIA..." },
+    { "key_name": "secret_key", "value": "wJa..." }
+  ]
+}
+```
+
+#### Azure Blob Storage
+
+| Field | Value |
+|-------|-------|
+| **Type** | `azure_blob` |
+| **Credential Type** | `api_key` or `service_principal` |
+| **Config** | *(none required — connection string contains account info)* |
+| **Credentials** | `connection_string` |
+| **Discovers** | Containers, blobs, public access settings |
+| **Scans** | Blob content (first 64KB per blob, 5 samples per container) |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "connection_string", "value": "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=..." }
+  ]
+}
+```
+
+#### Azure Data Lake Storage (ADLS)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `adls` |
+| **Credential Type** | `api_key` |
+| **Config** | `storage_account` (string) — your ADLS Gen2 storage account name |
+| **Credentials** | `access_key` — storage account key |
+| **Discovers** | File systems, directories, files |
+| **Scans** | File content (first 64KB per file, 5 samples per file system) |
+
+```json
+{
+  "config": { "storage_account": "mydatalake" },
+  "credentials": [
+    { "key_name": "access_key", "value": "AbCdEf..." }
+  ]
+}
+```
+
+#### Google Cloud Storage
+
+| Field | Value |
+|-------|-------|
+| **Type** | `gcs` |
+| **Credential Type** | `service_principal` |
+| **Config** | `project_id` (string) — GCP project ID |
+| **Credentials** | Service account JSON (set via `GOOGLE_APPLICATION_CREDENTIALS` env var) |
+| **Discovers** | Buckets, objects, IAM policies, KMS encryption |
+| **Scans** | Object content (first 64KB per blob, 5 samples per bucket) |
+
+```json
+{
+  "config": { "project_id": "my-gcp-project" },
+  "credentials": []
+}
+```
+
+#### Microsoft OneDrive
+
+| Field | Value |
+|-------|-------|
+| **Type** | `onedrive` |
+| **Credential Type** | `oauth2` |
+| **Config** | `user_id` (string, optional — defaults to `me`) |
+| **Credentials** | `access_token` — Microsoft Graph OAuth2 token |
+| **Required Scopes** | `Files.Read.All`, `User.Read` |
+| **Discovers** | Files, folders, sharing status |
+| **Scans** | File content download (first 64KB) |
+
+```json
+{
+  "config": { "user_id": "me" },
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ0eXAi..." }
+  ]
+}
+```
+
+#### SharePoint Online
+
+| Field | Value |
+|-------|-------|
+| **Type** | `sharepoint_online` |
+| **Credential Type** | `oauth2` |
+| **Config** | `site_url` (string) — e.g. `contoso.sharepoint.com:/sites/team`, `site_id` (string) |
+| **Credentials** | `access_token` — Microsoft Graph OAuth2 token |
+| **Required Scopes** | `Sites.Read.All`, `Files.Read.All` |
+| **Discovers** | Document libraries, files, folders, sharing links |
+| **Scans** | File content download (first 64KB) |
+
+```json
+{
+  "config": {
+    "site_url": "contoso.sharepoint.com:/sites/team",
+    "site_id": "abc123-def456"
+  },
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ0eXAi..." }
+  ]
+}
+```
+
+#### Google Drive
+
+| Field | Value |
+|-------|-------|
+| **Type** | `google_drive` |
+| **Credential Type** | `oauth2` |
+| **Config** | *(none required)* |
+| **Credentials** | `access_token` — Google OAuth2 token |
+| **Required Scopes** | `drive.readonly` |
+| **Discovers** | Files, folders, sharing status, MIME types |
+| **Scans** | File content download (first 64KB) |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "access_token", "value": "ya29.a0..." }
+  ]
+}
+```
+
+#### Box
+
+| Field | Value |
+|-------|-------|
+| **Type** | `box` |
+| **Credential Type** | `oauth2` |
+| **Config** | `folder_id` (string, optional — defaults to `0` for root) |
+| **Credentials** | `access_token` — Box OAuth2 token |
+| **Discovers** | Files, folders, shared links, access levels |
+| **Scans** | File content download (first 64KB) |
+
+```json
+{
+  "config": { "folder_id": "0" },
+  "credentials": [
+    { "key_name": "access_token", "value": "abc123..." }
+  ]
+}
+```
+
+#### Dropbox
+
+| Field | Value |
+|-------|-------|
+| **Type** | `dropbox` |
+| **Credential Type** | `oauth2` |
+| **Config** | `folder_path` (string, optional — defaults to `""` for root) |
+| **Credentials** | `access_token` — Dropbox OAuth2 token |
+| **Discovers** | Files, folders, sharing info |
+| **Scans** | File content download (first 64KB) |
+
+```json
+{
+  "config": { "folder_path": "/Shared" },
+  "credentials": [
+    { "key_name": "access_token", "value": "sl.B..." }
+  ]
+}
+```
+
+#### Egnyte
+
+| Field | Value |
+|-------|-------|
+| **Type** | `egnyte` |
+| **Credential Type** | `oauth2` |
+| **Config** | `domain` (string) — e.g. `company.egnyte.com`, `folder_path` (string, optional — defaults to `/Shared`) |
+| **Credentials** | `access_token` — Egnyte OAuth2 token |
+| **Discovers** | Files, folders in specified path |
+| **Scans** | File content download (first 64KB) |
+
+```json
+{
+  "config": {
+    "domain": "company.egnyte.com",
+    "folder_path": "/Shared/Finance"
+  },
+  "credentials": [
+    { "key_name": "access_token", "value": "abc123..." }
+  ]
+}
+```
+
+---
+
+### A.2 Database Connectors (8 types)
+
+These connectors scan structured data inside relational and NoSQL databases for PII, financial data, and secrets.
+
+#### PostgreSQL
+
+| Field | Value |
+|-------|-------|
+| **Type** | `postgresql` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string), `port` (int, default: 5432), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns with data types |
+| **Scans** | Row samples (first 50 rows per table), column-level classification |
+
+```json
+{
+  "config": { "host": "prod-db.example.com", "port": 5432, "database": "customers" },
+  "credentials": [
+    { "key_name": "username", "value": "dspm_reader" },
+    { "key_name": "password", "value": "s3cur3P@ss" }
+  ]
+}
+```
+
+#### MySQL
+
+| Field | Value |
+|-------|-------|
+| **Type** | `mysql` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string), `port` (int, default: 3306), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": { "host": "mysql.internal.com", "port": 3306, "database": "webapp" },
+  "credentials": [
+    { "key_name": "username", "value": "dspm_scan" },
+    { "key_name": "password", "value": "p@ssw0rd" }
+  ]
+}
+```
+
+#### Microsoft SQL Server
+
+| Field | Value |
+|-------|-------|
+| **Type** | `mssql` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string), `port` (int, default: 1433), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": { "host": "sqlserver.corp.com", "port": 1433, "database": "ERP" },
+  "credentials": [
+    { "key_name": "username", "value": "sa_dspm" },
+    { "key_name": "password", "value": "Str0ngP@ss!" }
+  ]
+}
+```
+
+#### Oracle Database
+
+| Field | Value |
+|-------|-------|
+| **Type** | `oracle` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string), `port` (int, default: 1521), `database` (string — SID or service name) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": { "host": "oracle.corp.com", "port": 1521, "database": "ORCL" },
+  "credentials": [
+    { "key_name": "username", "value": "dspm_user" },
+    { "key_name": "password", "value": "Or@cleP@ss" }
+  ]
+}
+```
+
+#### MariaDB
+
+| Field | Value |
+|-------|-------|
+| **Type** | `mariadb` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string), `port` (int, default: 3306), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": { "host": "mariadb.internal.com", "port": 3306, "database": "app_data" },
+  "credentials": [
+    { "key_name": "username", "value": "dspm_scan" },
+    { "key_name": "password", "value": "p@ssw0rd" }
+  ]
+}
+```
+
+#### IBM Db2
+
+| Field | Value |
+|-------|-------|
+| **Type** | `db2` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string), `port` (int, default: 50000), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": { "host": "db2.corp.com", "port": 50000, "database": "SAMPLE" },
+  "credentials": [
+    { "key_name": "username", "value": "db2admin" },
+    { "key_name": "password", "value": "Db2P@ss!" }
+  ]
+}
+```
+
+#### MongoDB
+
+| Field | Value |
+|-------|-------|
+| **Type** | `mongodb` |
+| **Credential Type** | `username_password` or `api_key` |
+| **Config** | `host` (string), `port` (int, default: 27017), `database` (string, optional) |
+| **Credentials** | `username`, `password` — or `connection_string` for Atlas/replica sets |
+| **Discovers** | Databases, collections, document structure, collection stats |
+| **Scans** | Document samples (first 50 documents per collection, JSON serialized) |
+
+```json
+{
+  "config": { "host": "mongo.internal.com", "port": 27017 },
+  "credentials": [
+    { "key_name": "connection_string", "value": "mongodb+srv://user:pass@cluster.mongodb.net" }
+  ]
+}
+```
+
+#### Cassandra
+
+| Field | Value |
+|-------|-------|
+| **Type** | `cassandra` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string — contact point), `port` (int, default: 9042) |
+| **Credentials** | `username`, `password` (optional for auth-disabled clusters) |
+| **Discovers** | Keyspaces, tables, column definitions |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": { "host": "cassandra-node1.internal.com", "port": 9042 },
+  "credentials": [
+    { "key_name": "username", "value": "cassandra" },
+    { "key_name": "password", "value": "cassandra" }
+  ]
+}
+```
+
+---
+
+### A.3 Data Warehouse Connectors (6 types)
+
+These connectors scan large analytics platforms and data lakes.
+
+#### Snowflake
+
+| Field | Value |
+|-------|-------|
+| **Type** | `snowflake` |
+| **Credential Type** | `username_password` |
+| **Config** | `account` (string — e.g. `xy12345.ap-south-1`), `warehouse` (string), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, column types, row counts |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": {
+    "account": "xy12345.ap-south-1",
+    "warehouse": "COMPUTE_WH",
+    "database": "ANALYTICS"
+  },
+  "credentials": [
+    { "key_name": "username", "value": "DSPM_SERVICE" },
+    { "key_name": "password", "value": "Sn0wP@ss!" }
+  ]
+}
+```
+
+#### Google BigQuery
+
+| Field | Value |
+|-------|-------|
+| **Type** | `bigquery` |
+| **Credential Type** | `service_principal` |
+| **Config** | `project_id` (string) |
+| **Credentials** | Service account JSON (set via `GOOGLE_APPLICATION_CREDENTIALS` env var) |
+| **Discovers** | Datasets, tables, schemas, row counts, byte sizes, encryption |
+| **Scans** | Row samples (first 50 rows per table via SQL query) |
+
+```json
+{
+  "config": { "project_id": "my-analytics-project" },
+  "credentials": []
+}
+```
+
+#### Amazon Redshift
+
+| Field | Value |
+|-------|-------|
+| **Type** | `redshift` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string — cluster endpoint), `port` (int, default: 5439), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns, row counts |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": {
+    "host": "my-cluster.abc123.ap-south-1.redshift.amazonaws.com",
+    "port": 5439,
+    "database": "warehouse"
+  },
+  "credentials": [
+    { "key_name": "username", "value": "dspm_reader" },
+    { "key_name": "password", "value": "R3dsh1ft!" }
+  ]
+}
+```
+
+#### Azure Synapse Analytics
+
+| Field | Value |
+|-------|-------|
+| **Type** | `azure_synapse` |
+| **Credential Type** | `username_password` |
+| **Config** | `host` (string — e.g. `myworkspace.sql.azuresynapse.net`), `port` (int, default: 1433), `database` (string) |
+| **Credentials** | `username`, `password` |
+| **Discovers** | Schemas, tables, columns |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": {
+    "host": "myworkspace.sql.azuresynapse.net",
+    "port": 1433,
+    "database": "synapse_pool"
+  },
+  "credentials": [
+    { "key_name": "username", "value": "sqladmin" },
+    { "key_name": "password", "value": "Syn@ps3P@ss" }
+  ]
+}
+```
+
+#### Databricks
+
+| Field | Value |
+|-------|-------|
+| **Type** | `databricks` |
+| **Credential Type** | `api_key` |
+| **Config** | `host` (string — workspace URL), `http_path` (string — SQL warehouse path) |
+| **Credentials** | `access_token` — Databricks personal access token |
+| **Discovers** | Databases/catalogs, tables, column types, row counts |
+| **Scans** | Row samples (first 50 rows per table) |
+
+```json
+{
+  "config": {
+    "host": "adb-123456789.0.azuredatabricks.net",
+    "http_path": "/sql/1.0/warehouses/abc123"
+  },
+  "credentials": [
+    { "key_name": "access_token", "value": "dapi123abc..." }
+  ]
+}
+```
+
+#### Hadoop HDFS
+
+| Field | Value |
+|-------|-------|
+| **Type** | `hdfs` |
+| **Credential Type** | `username_password` |
+| **Config** | `namenode_url` (string — WebHDFS endpoint, e.g. `http://namenode:9870`), `scan_path` (string, default: `/`) |
+| **Credentials** | `username` (string — HDFS user, default: `hdfs`) |
+| **Discovers** | Directories, files, sizes, owners, permissions |
+| **Scans** | File content (first 64KB via WebHDFS OPEN) |
+
+```json
+{
+  "config": {
+    "namenode_url": "http://namenode.internal.com:9870",
+    "scan_path": "/data/warehouse"
+  },
+  "credentials": [
+    { "key_name": "username", "value": "hdfs" }
+  ]
+}
+```
+
+---
+
+### A.4 SaaS / Collaboration Connectors (8 types)
+
+These connectors scan documents, messages, and shared content in SaaS platforms.
+
+#### Microsoft 365
+
+| Field | Value |
+|-------|-------|
+| **Type** | `microsoft_365` |
+| **Credential Type** | `oauth2` |
+| **Config** | *(none required)* |
+| **Credentials** | `access_token` — Microsoft Graph OAuth2 token (app-level) |
+| **Required Scopes** | `Sites.Read.All`, `Files.Read.All`, `User.Read.All` |
+| **Discovers** | SharePoint sites, user OneDrives |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ0eXAi..." }
+  ]
+}
+```
+
+#### Microsoft Teams
+
+| Field | Value |
+|-------|-------|
+| **Type** | `microsoft_teams` |
+| **Credential Type** | `oauth2` |
+| **Config** | *(none required)* |
+| **Credentials** | `access_token` — Microsoft Graph OAuth2 token |
+| **Required Scopes** | `Group.Read.All`, `ChannelMessage.Read.All` |
+| **Discovers** | Teams, channels |
+| **Scans** | Channel message content (last 50 messages per channel) |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ0eXAi..." }
+  ]
+}
+```
+
+#### Google Workspace
+
+| Field | Value |
+|-------|-------|
+| **Type** | `google_workspace` |
+| **Credential Type** | `oauth2` |
+| **Config** | *(none required)* |
+| **Credentials** | `access_token` — Google OAuth2 token with admin directory + Drive access |
+| **Required Scopes** | `admin.directory.user.readonly`, `drive.readonly` |
+| **Discovers** | User Drive files, shared documents |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "access_token", "value": "ya29.a0..." }
+  ]
+}
+```
+
+#### Gmail
+
+| Field | Value |
+|-------|-------|
+| **Type** | `gmail` |
+| **Credential Type** | `oauth2` |
+| **Config** | *(none required)* |
+| **Credentials** | `access_token` — Google OAuth2 token |
+| **Required Scopes** | `gmail.readonly` |
+| **Discovers** | Labels (folders) |
+| **Scans** | Email body content (first 10 messages per label, first 4KB each) |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "access_token", "value": "ya29.a0..." }
+  ]
+}
+```
+
+#### Slack
+
+| Field | Value |
+|-------|-------|
+| **Type** | `slack` |
+| **Credential Type** | `api_key` |
+| **Config** | *(none required)* |
+| **Credentials** | `bot_token` or `access_token` — Slack Bot/User OAuth token |
+| **Required Scopes** | `channels:read`, `channels:history`, `groups:read`, `groups:history` |
+| **Discovers** | Public and private channels |
+| **Scans** | Message history (last 50 messages per channel) |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "bot_token", "value": "xoxb-123456-789012-AbCdEf" }
+  ]
+}
+```
+
+#### Jira
+
+| Field | Value |
+|-------|-------|
+| **Type** | `jira` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — e.g. `https://company.atlassian.net`) |
+| **Credentials** | `email` (string), `api_token` (string — Atlassian API token) |
+| **Discovers** | Projects |
+| **Scans** | Issue summaries, descriptions, and comments (first 50 per project) |
+
+```json
+{
+  "config": { "base_url": "https://company.atlassian.net" },
+  "credentials": [
+    { "key_name": "email", "value": "admin@company.com" },
+    { "key_name": "api_token", "value": "ATATT3x..." }
+  ]
+}
+```
+
+#### Confluence
+
+| Field | Value |
+|-------|-------|
+| **Type** | `confluence` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — e.g. `https://company.atlassian.net`) |
+| **Credentials** | `email` (string), `api_token` (string — Atlassian API token) |
+| **Discovers** | Spaces |
+| **Scans** | Page titles and body content (first 25 pages per space) |
+
+```json
+{
+  "config": { "base_url": "https://company.atlassian.net" },
+  "credentials": [
+    { "key_name": "email", "value": "admin@company.com" },
+    { "key_name": "api_token", "value": "ATATT3x..." }
+  ]
+}
+```
+
+#### Salesforce
+
+| Field | Value |
+|-------|-------|
+| **Type** | `salesforce` |
+| **Credential Type** | `oauth2` |
+| **Config** | `instance_url` (string — e.g. `https://mycompany.salesforce.com`) |
+| **Credentials** | `access_token` — Salesforce OAuth2 token |
+| **Discovers** | SObjects (queryable objects like Account, Contact, Lead, etc.) |
+| **Scans** | Record samples (first 50 records, first 20 fields per object) |
+
+```json
+{
+  "config": { "instance_url": "https://mycompany.salesforce.com" },
+  "credentials": [
+    { "key_name": "access_token", "value": "00D..." }
+  ]
+}
+```
+
+---
+
+### A.5 On-Prem Storage Connectors (4 types)
+
+These connectors scan internal enterprise file storage.
+
+#### Windows File Server (SMB)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `smb` |
+| **Credential Type** | `username_password` |
+| **Config** | `server` (string — hostname/IP), `share` (string — share name) |
+| **Credentials** | `username` (string — `DOMAIN\user` format), `password` |
+| **Discovers** | Files, folders, sizes |
+| **Scans** | File content (first 64KB per file) |
+
+```json
+{
+  "config": { "server": "fileserver.corp.com", "share": "Finance" },
+  "credentials": [
+    { "key_name": "username", "value": "CORP\\dspm_scanner" },
+    { "key_name": "password", "value": "Sm8P@ss!" }
+  ]
+}
+```
+
+#### NFS File Share
+
+| Field | Value |
+|-------|-------|
+| **Type** | `nfs` |
+| **Credential Type** | `username_password` |
+| **Config** | `mount_path` (string — local mount point where NFS is mounted) |
+| **Credentials** | *(none — uses OS-level NFS mount permissions)* |
+| **Discovers** | Files, folders, sizes, permissions |
+| **Scans** | File content (first 64KB per file) |
+
+> **Prerequisite:** The NFS share must be mounted on the DSPM backend server before configuring the connector.
+
+```json
+{
+  "config": { "mount_path": "/mnt/nfs/shared_data" },
+  "credentials": []
+}
+```
+
+#### Local File System
+
+| Field | Value |
+|-------|-------|
+| **Type** | `local_fs` |
+| **Credential Type** | `username_password` |
+| **Config** | `base_path` (string — directory to scan) |
+| **Credentials** | *(none — uses backend process permissions)* |
+| **Discovers** | Files, folders, sizes |
+| **Scans** | File content (first 64KB per file) |
+
+```json
+{
+  "config": { "base_path": "/data/exports" },
+  "credentials": []
+}
+```
+
+#### On-Prem SharePoint
+
+| Field | Value |
+|-------|-------|
+| **Type** | `on_prem_sharepoint` |
+| **Credential Type** | `username_password` |
+| **Config** | `site_url` (string — e.g. `http://sharepoint.corp.com/sites/hr`) |
+| **Credentials** | `username`, `password` — Active Directory credentials |
+| **Discovers** | Document libraries, list items |
+| **Scans** | List item content (first 50 items per library) |
+
+```json
+{
+  "config": { "site_url": "http://sharepoint.corp.com/sites/hr" },
+  "credentials": [
+    { "key_name": "username", "value": "CORP\\dspm_user" },
+    { "key_name": "password", "value": "Sp0nPr3m!" }
+  ]
+}
+```
+
+---
+
+### A.6 Cloud Infrastructure Connectors (3 types)
+
+These connectors discover all data stores across entire cloud accounts/subscriptions.
+
+#### AWS Cloud (Full Account Discovery)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `aws_cloud` |
+| **Credential Type** | `iam_role` or `api_key` |
+| **Config** | `region` (string, default: `us-east-1`) |
+| **Credentials** | `access_key`, `secret_key` |
+| **Discovers** | S3 buckets, RDS instances, DynamoDB tables, Redshift clusters, EBS snapshots |
+
+```json
+{
+  "config": { "region": "ap-south-1" },
+  "credentials": [
+    { "key_name": "access_key", "value": "AKIA..." },
+    { "key_name": "secret_key", "value": "wJa..." }
+  ]
+}
+```
+
+#### Azure Subscription (Full Subscription Discovery)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `azure_subscription` |
+| **Credential Type** | `service_principal` |
+| **Config** | `subscription_id` (string) |
+| **Credentials** | `access_token` — Azure Management API Bearer token |
+| **Discovers** | Storage accounts, SQL servers, Cosmos DB accounts, VM snapshots |
+
+```json
+{
+  "config": { "subscription_id": "abc12345-def6-7890-ghij-klmnopqrstuv" },
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ0eXAi..." }
+  ]
+}
+```
+
+#### Google Cloud Platform (Full Project Discovery)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `gcp_cloud` |
+| **Credential Type** | `service_principal` |
+| **Config** | `project_id` (string) |
+| **Credentials** | `access_token` — GCP OAuth2 token |
+| **Discovers** | Cloud Storage buckets, Cloud SQL instances, BigQuery datasets |
+
+```json
+{
+  "config": { "project_id": "my-gcp-project" },
+  "credentials": [
+    { "key_name": "access_token", "value": "ya29.a0..." }
+  ]
+}
+```
+
+---
+
+### A.7 Identity & Access Management Connectors (7 types)
+
+These connectors map who has access to sensitive data by importing users, groups, roles, and permissions.
+
+#### Azure Active Directory
+
+| Field | Value |
+|-------|-------|
+| **Type** | `azure_ad` |
+| **Credential Type** | `oauth2` |
+| **Config** | *(none required)* |
+| **Credentials** | `access_token` — Microsoft Graph OAuth2 token |
+| **Required Scopes** | `User.Read.All`, `Group.Read.All`, `Application.Read.All` |
+| **Discovers** | Users (active/disabled), groups, service principals |
+
+```json
+{
+  "config": {},
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ0eXAi..." }
+  ]
+}
+```
+
+#### AWS IAM
+
+| Field | Value |
+|-------|-------|
+| **Type** | `aws_iam` |
+| **Credential Type** | `iam_role` or `api_key` |
+| **Config** | `region` (string, default: `us-east-1`) |
+| **Credentials** | `access_key`, `secret_key` |
+| **Required Permissions** | `iam:ListUsers`, `iam:ListRoles`, `iam:ListGroups`, `iam:GetAccountSummary` |
+| **Discovers** | IAM users, roles, groups with ARNs |
+
+```json
+{
+  "config": { "region": "us-east-1" },
+  "credentials": [
+    { "key_name": "access_key", "value": "AKIA..." },
+    { "key_name": "secret_key", "value": "wJa..." }
+  ]
+}
+```
+
+#### Google IAM
+
+| Field | Value |
+|-------|-------|
+| **Type** | `google_iam` |
+| **Credential Type** | `service_principal` |
+| **Config** | `project_id` (string) |
+| **Credentials** | `access_token` — GCP OAuth2 token |
+| **Required Permissions** | `resourcemanager.projects.getIamPolicy`, `iam.serviceAccounts.list` |
+| **Discovers** | IAM policy bindings (members + roles), service accounts |
+
+```json
+{
+  "config": { "project_id": "my-gcp-project" },
+  "credentials": [
+    { "key_name": "access_token", "value": "ya29.a0..." }
+  ]
+}
+```
+
+#### LDAP
+
+| Field | Value |
+|-------|-------|
+| **Type** | `ldap` |
+| **Credential Type** | `username_password` |
+| **Config** | `server` (string — LDAP server hostname), `port` (int, default: 389), `base_dn` (string — search base, e.g. `DC=corp,DC=com`) |
+| **Credentials** | `bind_dn` (string — e.g. `CN=dspm,OU=Service Accounts,DC=corp,DC=com`), `password` |
+| **Discovers** | User objects (cn, mail, sAMAccountName) |
+
+```json
+{
+  "config": {
+    "server": "ldap.corp.com",
+    "port": 389,
+    "base_dn": "DC=corp,DC=com"
+  },
+  "credentials": [
+    { "key_name": "bind_dn", "value": "CN=dspm_svc,OU=ServiceAccounts,DC=corp,DC=com" },
+    { "key_name": "password", "value": "Ld@pP@ss!" }
+  ]
+}
+```
+
+#### Microsoft Active Directory
+
+| Field | Value |
+|-------|-------|
+| **Type** | `microsoft_ad` |
+| **Credential Type** | `username_password` |
+| **Config** | Same as LDAP — `server`, `port` (default: 389), `base_dn` |
+| **Credentials** | `bind_dn`, `password` |
+| **Discovers** | AD user objects, same as LDAP with AD-specific defaults |
+
+```json
+{
+  "config": {
+    "server": "dc01.corp.com",
+    "port": 389,
+    "base_dn": "DC=corp,DC=com"
+  },
+  "credentials": [
+    { "key_name": "bind_dn", "value": "CN=dspm_svc,OU=ServiceAccounts,DC=corp,DC=com" },
+    { "key_name": "password", "value": "AdP@ss!" }
+  ]
+}
+```
+
+#### Okta
+
+| Field | Value |
+|-------|-------|
+| **Type** | `okta` |
+| **Credential Type** | `api_key` |
+| **Config** | `domain` (string — e.g. `company.okta.com`) |
+| **Credentials** | `api_token` — Okta Admin API token |
+| **Required Permissions** | Super admin or custom admin with User/Group/App read scopes |
+| **Discovers** | Users (with status), groups, applications |
+
+```json
+{
+  "config": { "domain": "company.okta.com" },
+  "credentials": [
+    { "key_name": "api_token", "value": "00abc123..." }
+  ]
+}
+```
+
+#### Ping Identity
+
+| Field | Value |
+|-------|-------|
+| **Type** | `ping_identity` |
+| **Credential Type** | `oauth2` |
+| **Config** | `base_url` (string — PingOne API base), `environment_id` (string) |
+| **Credentials** | `access_token` — PingOne OAuth2 token |
+| **Discovers** | Users in the specified environment |
+
+```json
+{
+  "config": {
+    "base_url": "https://api.pingone.com/v1",
+    "environment_id": "abc-123-def"
+  },
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ..." }
+  ]
+}
+```
+
+---
+
+### A.8 DevOps & Code Repository Connectors (4 types)
+
+These connectors detect secrets, API keys, and sensitive data committed in code repositories.
+
+#### GitHub
+
+| Field | Value |
+|-------|-------|
+| **Type** | `github` |
+| **Credential Type** | `api_key` |
+| **Config** | `organization` (string, optional — if empty, scans user's repos) |
+| **Credentials** | `access_token` — GitHub Personal Access Token or GitHub App token |
+| **Required Scopes** | `repo` (for private repos), or `public_repo` for public only |
+| **Discovers** | Repositories with visibility and default branch |
+| **Scans** | Code search for secret patterns (passwords, API keys, AKIA*, private keys) |
+
+```json
+{
+  "config": { "organization": "my-company" },
+  "credentials": [
+    { "key_name": "access_token", "value": "ghp_abc123..." }
+  ]
+}
+```
+
+#### GitLab
+
+| Field | Value |
+|-------|-------|
+| **Type** | `gitlab` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string, default: `https://gitlab.com`), `group_id` (string, optional) |
+| **Credentials** | `private_token` — GitLab Personal Access Token |
+| **Required Scopes** | `read_api`, `read_repository` |
+| **Discovers** | Projects with visibility |
+| **Scans** | Blob search for secret patterns across project code |
+
+```json
+{
+  "config": {
+    "base_url": "https://gitlab.company.com",
+    "group_id": "42"
+  },
+  "credentials": [
+    { "key_name": "private_token", "value": "glpat-abc123..." }
+  ]
+}
+```
+
+#### Bitbucket
+
+| Field | Value |
+|-------|-------|
+| **Type** | `bitbucket` |
+| **Credential Type** | `username_password` |
+| **Config** | `base_url` (string, default: `https://api.bitbucket.org/2.0`), `workspace` (string) |
+| **Credentials** | `username`, `app_password` — Bitbucket App Password |
+| **Required Permissions** | `Repositories: Read` |
+| **Discovers** | Repositories with privacy status |
+| **Scans** | File search for secret patterns |
+
+```json
+{
+  "config": {
+    "workspace": "my-company",
+    "base_url": "https://api.bitbucket.org/2.0"
+  },
+  "credentials": [
+    { "key_name": "username", "value": "dspm-bot" },
+    { "key_name": "app_password", "value": "ATBBabc123..." }
+  ]
+}
+```
+
+#### Azure DevOps
+
+| Field | Value |
+|-------|-------|
+| **Type** | `azure_devops` |
+| **Credential Type** | `api_key` |
+| **Config** | `organization` (string — Azure DevOps organization name) |
+| **Credentials** | `personal_access_token` — Azure DevOps PAT |
+| **Required Scopes** | `Code (Read)`, `Project and Team (Read)` |
+| **Discovers** | Projects, Git repositories |
+| **Scans** | Repository file content (root-level files, first 64KB each) |
+
+```json
+{
+  "config": { "organization": "my-company" },
+  "credentials": [
+    { "key_name": "personal_access_token", "value": "abc123xyz..." }
+  ]
+}
+```
+
+---
+
+### A.9 Security Platform Integrations (5 types)
+
+These connectors integrate with security tools to correlate DSPM findings with existing security controls.
+
+#### Forcepoint DLP
+
+| Field | Value |
+|-------|-------|
+| **Type** | `forcepoint_dlp` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — Forcepoint management API endpoint) |
+| **Credentials** | `api_key` |
+| **Discovers** | DLP policies |
+| **Scans** | DLP incident data (first 50 incidents) |
+
+```json
+{
+  "config": { "base_url": "https://dlp.company.com" },
+  "credentials": [
+    { "key_name": "api_key", "value": "fp-abc123..." }
+  ]
+}
+```
+
+#### Splunk SIEM
+
+| Field | Value |
+|-------|-------|
+| **Type** | `splunk` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — Splunk REST API, e.g. `https://splunk.company.com:8089`), `verify_ssl` (bool, default: true) |
+| **Credentials** | `bearer_token` or `session_key` |
+| **Discovers** | Indexes |
+| **Scans** | Event search (first 50 events per index) |
+
+```json
+{
+  "config": {
+    "base_url": "https://splunk.company.com:8089",
+    "verify_ssl": true
+  },
+  "credentials": [
+    { "key_name": "bearer_token", "value": "eyJra..." }
+  ]
+}
+```
+
+#### IBM QRadar
+
+| Field | Value |
+|-------|-------|
+| **Type** | `qradar` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — QRadar Console API, e.g. `https://qradar.company.com`), `verify_ssl` (bool, default: true) |
+| **Credentials** | `sec_token` — QRadar Authorized Service Token |
+| **Discovers** | Log sources |
+| **Scans** | Ariel event search (last 1 hour, 50 events) |
+
+```json
+{
+  "config": {
+    "base_url": "https://qradar.company.com",
+    "verify_ssl": true
+  },
+  "credentials": [
+    { "key_name": "sec_token", "value": "abc-123-def..." }
+  ]
+}
+```
+
+#### SOAR Platform (Generic)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `generic_soar` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — SOAR API endpoint) |
+| **Credentials** | `api_key` or `access_token` |
+| **Discovers** | Playbooks |
+
+```json
+{
+  "config": { "base_url": "https://soar.company.com" },
+  "credentials": [
+    { "key_name": "api_key", "value": "soar-abc123..." }
+  ]
+}
+```
+
+#### CASB (Generic)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `generic_casb` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — CASB API endpoint) |
+| **Credentials** | `api_key` or `access_token` |
+| **Discovers** | Monitored cloud applications |
+
+```json
+{
+  "config": { "base_url": "https://casb.company.com" },
+  "credentials": [
+    { "key_name": "api_key", "value": "casb-abc123..." }
+  ]
+}
+```
+
+---
+
+### A.10 Backup & Snapshot Connectors (4 types)
+
+These connectors detect sensitive data in backup copies and snapshots.
+
+#### AWS EBS Snapshots
+
+| Field | Value |
+|-------|-------|
+| **Type** | `aws_ebs_snapshot` |
+| **Credential Type** | `iam_role` or `api_key` |
+| **Config** | `region` (string, default: `us-east-1`) |
+| **Credentials** | `access_key`, `secret_key` |
+| **Required Permissions** | `ec2:DescribeSnapshots`, `sts:GetCallerIdentity` |
+| **Discovers** | EBS snapshots (owned by account) with size, encryption, and state |
+| **Scans** | *(Not directly scannable — snapshots require volume mounting)* |
+
+```json
+{
+  "config": { "region": "ap-south-1" },
+  "credentials": [
+    { "key_name": "access_key", "value": "AKIA..." },
+    { "key_name": "secret_key", "value": "wJa..." }
+  ]
+}
+```
+
+#### Azure VM Snapshots
+
+| Field | Value |
+|-------|-------|
+| **Type** | `azure_vm_snapshot` |
+| **Credential Type** | `service_principal` |
+| **Config** | `subscription_id` (string) |
+| **Credentials** | `access_token` — Azure Management API Bearer token |
+| **Discovers** | VM disk snapshots with size, encryption, and provisioning state |
+| **Scans** | *(Not directly scannable — snapshots require disk mounting)* |
+
+```json
+{
+  "config": { "subscription_id": "abc12345-def6-7890-ghij-klmnopqrstuv" },
+  "credentials": [
+    { "key_name": "access_token", "value": "eyJ0eXAi..." }
+  ]
+}
+```
+
+#### Backup Repository (Generic)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `backup_repository` |
+| **Credential Type** | `api_key` |
+| **Config** | `base_url` (string — backup management API endpoint) |
+| **Credentials** | `api_key` or `access_token` |
+| **Discovers** | Backup jobs/sets with sizes and statuses |
+
+```json
+{
+  "config": { "base_url": "https://backup.company.com/api" },
+  "credentials": [
+    { "key_name": "api_key", "value": "bkp-abc123..." }
+  ]
+}
+```
+
+#### Archive Storage (AWS Glacier / Azure Archive)
+
+| Field | Value |
+|-------|-------|
+| **Type** | `archive_storage` |
+| **Credential Type** | `api_key` or `service_principal` |
+| **Config** | `provider` (string — `aws` or `azure`), plus provider-specific fields: for AWS: `region`; for Azure: use connection string |
+| **Credentials** | AWS: `access_key`, `secret_key`; Azure: `connection_string` |
+| **Discovers** | AWS: Glacier vaults with sizes; Azure: archive-tier containers |
+| **Scans** | *(Not directly scannable — archive retrieval takes hours)* |
+
+```json
+{
+  "config": { "provider": "aws", "region": "ap-south-1" },
+  "credentials": [
+    { "key_name": "access_key", "value": "AKIA..." },
+    { "key_name": "secret_key", "value": "wJa..." }
+  ]
+}
+```
+
+---
+
+### Connector Count Summary
+
+| # | Category | Connector Types | Count |
+|---|----------|----------------|-------|
+| 1 | Cloud Storage | AWS S3, Azure Blob, ADLS, GCS, OneDrive, SharePoint Online, Google Drive, Box, Dropbox, Egnyte | **10** |
+| 2 | Databases | PostgreSQL, MySQL, MSSQL, Oracle, MariaDB, IBM Db2, MongoDB, Cassandra | **8** |
+| 3 | Data Warehouses | Snowflake, BigQuery, Redshift, Azure Synapse, Databricks, HDFS | **6** |
+| 4 | SaaS / Collaboration | Microsoft 365, Microsoft Teams, Google Workspace, Gmail, Slack, Jira, Confluence, Salesforce | **8** |
+| 5 | On-Prem Storage | SMB, NFS, Local FS, On-Prem SharePoint | **4** |
+| 6 | Cloud Infrastructure | AWS Cloud, Azure Subscription, GCP Cloud | **3** |
+| 7 | Identity & Access | Azure AD, AWS IAM, Google IAM, LDAP, Microsoft AD, Okta, Ping Identity | **7** |
+| 8 | DevOps / Code Repos | GitHub, GitLab, Bitbucket, Azure DevOps | **4** |
+| 9 | Security Platforms | Forcepoint DLP, Splunk, QRadar, SOAR, CASB | **5** |
+| 10 | Backup & Snapshot | AWS EBS Snapshots, Azure VM Snapshots, Backup Repository, Archive Storage | **4** |
+| | | **Total** | **59** |
+
+Each connector implements:
+- **`test_connection()`** — validate credentials and connectivity
+- **`list_assets()`** — discover all data stores and assets
+- **`fetch_metadata()`** — retrieve encryption, exposure, size, and region info
+- **`scan_content()`** — retrieve content for sensitive data classification
