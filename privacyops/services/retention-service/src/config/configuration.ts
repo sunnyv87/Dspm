@@ -55,14 +55,14 @@ export interface AppConfig {
 }
 
 export default (): AppConfig => ({
-  port: parseInt(process.env.PORT || '3010', 10),
+  port: parseInt(process.env.PORT || '3016', 10),
 
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
     username: process.env.DB_USERNAME || 'privacyops',
     password: process.env.DB_PASSWORD || 'privacyops',
-    database: process.env.DB_DATABASE || 'privacyops_retention',
+    database: process.env.DB_DATABASE || 'retention_service',
     ssl: process.env.DB_SSL === 'true',
     synchronize: process.env.DB_SYNCHRONIZE !== 'false',
     logging: process.env.DB_LOGGING === 'true',

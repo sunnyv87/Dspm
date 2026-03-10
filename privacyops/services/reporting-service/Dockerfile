@@ -36,9 +36,9 @@ RUN chown -R nestjs:nestjs /app
 
 USER nestjs
 
-EXPOSE 3012
+EXPOSE 3017
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3012/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3017/health || exit 1
 
 CMD ["node", "dist/main"]
