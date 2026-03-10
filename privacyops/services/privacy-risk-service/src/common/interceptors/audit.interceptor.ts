@@ -31,7 +31,6 @@ export class AuditInterceptor implements NestInterceptor {
             url,
             userId: user?.userId,
             tenantId: user?.tenantId,
-            email: user?.email,
             duration: `${duration}ms`,
             status: 'success',
           });
@@ -44,7 +43,6 @@ export class AuditInterceptor implements NestInterceptor {
             url,
             userId: user?.userId,
             tenantId: user?.tenantId,
-            email: user?.email,
             duration: `${duration}ms`,
             status: 'error',
             error: error.message,

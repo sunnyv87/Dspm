@@ -73,7 +73,7 @@ export default (): AppConfig => ({
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'change-me-in-production',
+    secret: process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-only-secret'),
     algorithm: process.env.JWT_ALGORITHM || 'HS256',
     accessTokenTtl: parseInt(process.env.JWT_ACCESS_TOKEN_TTL || '900', 10),
     refreshTokenTtl: parseInt(process.env.JWT_REFRESH_TOKEN_TTL || '604800', 10),

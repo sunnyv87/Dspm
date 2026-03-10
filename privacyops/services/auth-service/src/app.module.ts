@@ -44,7 +44,7 @@ import { RbacGuard } from './common/guards/rbac.guard';
         password: configService.get<string>('database.password'),
         database: configService.get<string>('database.database'),
         ssl: configService.get<boolean>('database.ssl')
-          ? { rejectUnauthorized: false }
+          ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
           : false,
         entities: [Tenant, User, Role, ApiToken, Session],
         synchronize: false,

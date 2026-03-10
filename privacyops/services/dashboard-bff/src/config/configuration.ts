@@ -2,7 +2,7 @@ export default () => ({
   port: parseInt(process.env.PORT, 10) || 3010,
   environment: process.env.NODE_ENV || 'development',
   jwt: {
-    secret: process.env.JWT_SECRET || 'default-secret-change-in-production',
+    secret: process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-only-secret'),
   },
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',

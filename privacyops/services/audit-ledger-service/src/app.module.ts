@@ -30,7 +30,7 @@ import { HealthController } from './modules/health/health.controller';
         synchronize: configService.get<boolean>('database.synchronize'),
         logging: configService.get<boolean>('database.logging'),
         ssl: configService.get<boolean>('database.ssl')
-          ? { rejectUnauthorized: false }
+          ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
           : false,
         extra: {
           max: configService.get<number>('database.maxConnections'),

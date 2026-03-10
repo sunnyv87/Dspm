@@ -12,7 +12,11 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1/workflows');
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
-  app.enableCors();
+  app.enableCors({
+    origin: (process.env.CORS_ORIGINS || 'http://localhost:3000').split(','),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Workflow Engine Service')

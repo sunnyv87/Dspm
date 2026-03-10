@@ -47,11 +47,11 @@ export default () => ({
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'change-me-in-production',
+    secret: process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-only-secret'),
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
   },
 
-  internalApiKey: process.env.INTERNAL_API_KEY || 'change-me-in-production',
+  internalApiKey: process.env.INTERNAL_API_KEY || (process.env.NODE_ENV === 'production' ? undefined : 'dev-only-api-key'),
 
   retention: {
     defaultDays: parseInt(process.env.DEFAULT_RETENTION_DAYS, 10) || 2555,

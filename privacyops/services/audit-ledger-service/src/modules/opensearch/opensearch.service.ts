@@ -16,7 +16,9 @@ export class OpenSearchService implements OnModuleInit {
         username: this.configService.get('opensearch.username') || 'admin',
         password: this.configService.get('opensearch.password') || 'admin',
       },
-      ssl: { rejectUnauthorized: false },
+      ssl: {
+        rejectUnauthorized: this.configService.get('opensearch.ssl.rejectUnauthorized') !== false,
+      },
     });
     await this.ensureIndex();
   }

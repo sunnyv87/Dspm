@@ -27,10 +27,12 @@ export class InternalApiGuard implements CanActivate {
     }
 
     // Constant-time comparison to prevent timing attacks
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(providedKey),
-      Buffer.from(this.apiKey),
-    );
+    const providedBuf = Buffer.from(providedKey);
+    const expectedBuf = Buffer.from(this.apiKey);
+    if (providedBuf.length !== expectedBuf.length) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+    const isValid = crypto.timingSafeEqual(providedBuf, expectedBuf);
 
     if (!isValid) {
       this.logger.warn(

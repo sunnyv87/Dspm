@@ -11,7 +11,7 @@ export default () => ({
     logging: process.env.DB_LOGGING === 'true',
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'change-me-in-production',
+    secret: process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-only-secret'),
   },
   kafka: {
     brokers: process.env.KAFKA_BROKERS || 'localhost:9092',
