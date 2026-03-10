@@ -7,10 +7,11 @@ import ConnectorsPage from "@/components/connectors/ConnectorsPage";
 import AssetsPage from "@/components/assets/AssetsPage";
 import AlertsPage from "@/components/alerts/AlertsPage";
 import CompliancePage from "@/components/compliance/CompliancePage";
+import AIAssistantPage from "@/components/ai/AIAssistantPage";
 import LoginPage from "@/components/layout/LoginPage";
 import { useAuthStore } from "@/lib/store";
 
-type Page = "dashboard" | "connectors" | "assets" | "alerts" | "compliance";
+type Page = "dashboard" | "connectors" | "assets" | "alerts" | "compliance" | "ai-assistant";
 
 export default function Home() {
   const { token } = useAuthStore();
@@ -27,6 +28,7 @@ export default function Home() {
       case "assets": return <AssetsPage />;
       case "alerts": return <AlertsPage />;
       case "compliance": return <CompliancePage />;
+      case "ai-assistant": return <AIAssistantPage />;
       default: return <DashboardOverview />;
     }
   };

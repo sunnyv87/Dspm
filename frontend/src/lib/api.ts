@@ -170,4 +170,10 @@ export const auditAPI = {
   export: (params?: any) => api.get("/audit/export", { params }),
 };
 
+// --- AI Query ---
+export const aiQueryAPI = {
+  query: (query: string) => api.post("/ai/query", { query }),
+  suggestions: () => api.get("/ai/suggestions"),
+};
+
 export default api;
