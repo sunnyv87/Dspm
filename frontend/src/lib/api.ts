@@ -176,4 +176,109 @@ export const aiQueryAPI = {
   suggestions: () => api.get("/ai/suggestions"),
 };
 
+// ============================================
+// PrivacyOps BFF APIs (unified dashboard)
+// ============================================
+
+const PRIVACYOPS_BFF_URL = process.env.NEXT_PUBLIC_PRIVACYOPS_BFF_URL || "http://localhost:4000";
+
+const privacyBff = axios.create({
+  baseURL: PRIVACYOPS_BFF_URL,
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true,
+});
+
+privacyBff.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// --- PrivacyOps Overview ---
+export const privacyOverviewAPI = {
+  summary: () => privacyBff.get("/overview/summary"),
+  metrics: () => privacyBff.get("/overview/metrics"),
+  alerts: () => privacyBff.get("/overview/alerts"),
+};
+
+// --- Consent Management ---
+export const consentAPI = {
+  list: (params?: any) => privacyBff.get("/api/v1/consent/records", { params }),
+  get: (id: string) => privacyBff.get(`/api/v1/consent/records/${id}`),
+  create: (data: any) => privacyBff.post("/api/v1/consent/records", data),
+  revoke: (id: string) => privacyBff.post(`/api/v1/consent/records/${id}/revoke`),
+  stats: () => privacyBff.get("/api/v1/consent/stats"),
+  purposes: () => privacyBff.get("/api/v1/consent/purposes"),
+};
+
+// --- Data Subject Rights (DSAR) ---
+export const dsarAPI = {
+  list: (params?: any) => privacyBff.get("/api/v1/rights/requests", { params }),
+  get: (id: string) => privacyBff.get(`/api/v1/rights/requests/${id}`),
+  create: (data: any) => privacyBff.post("/api/v1/rights/requests", data),
+  updateStatus: (id: string, data: any) => privacyBff.patch(`/api/v1/rights/requests/${id}`, data),
+  stats: () => privacyBff.get("/api/v1/rights/stats"),
+};
+
+// --- Breach Monitoring ---
+export const breachAPI = {
+  list: (params?: any) => privacyBff.get("/api/v1/breach/incidents", { params }),
+  get: (id: string) => privacyBff.get(`/api/v1/breach/incidents/${id}`),
+  create: (data: any) => privacyBff.post("/api/v1/breach/incidents", data),
+  updateStatus: (id: string, data: any) => privacyBff.patch(`/api/v1/breach/incidents/${id}`, data),
+  stats: () => privacyBff.get("/api/v1/breach/stats"),
+};
+
+// --- Vendor Risk ---
+export const vendorRiskAPI = {
+  list: (params?: any) => privacyBff.get("/api/v1/vendor-risk/vendors", { params }),
+  get: (id: string) => privacyBff.get(`/api/v1/vendor-risk/vendors/${id}`),
+  create: (data: any) => privacyBff.post("/api/v1/vendor-risk/vendors", data),
+  assess: (id: string, data: any) => privacyBff.post(`/api/v1/vendor-risk/vendors/${id}/assess`, data),
+  stats: () => privacyBff.get("/api/v1/vendor-risk/stats"),
+};
+
+// --- Retention Management ---
+export const retentionAPI = {
+  policies: (params?: any) => privacyBff.get("/api/v1/retention/policies", { params }),
+  getPolicy: (id: string) => privacyBff.get(`/api/v1/retention/policies/${id}`),
+  createPolicy: (data: any) => privacyBff.post("/api/v1/retention/policies", data),
+  updatePolicy: (id: string, data: any) => privacyBff.patch(`/api/v1/retention/policies/${id}`, data),
+  stats: () => privacyBff.get("/api/v1/retention/stats"),
+};
+
+// --- Workflow Management ---
+export const workflowAPI = {
+  list: (params?: any) => privacyBff.get("/api/v1/workflow/instances", { params }),
+  get: (id: string) => privacyBff.get(`/api/v1/workflow/instances/${id}`),
+  approve: (id: string, data: any) => privacyBff.post(`/api/v1/workflow/instances/${id}/approve`, data),
+  reject: (id: string, data: any) => privacyBff.post(`/api/v1/workflow/instances/${id}/reject`, data),
+  templates: () => privacyBff.get("/api/v1/workflow/templates"),
+};
+
+// --- Privacy Risk ---
+export const privacyRiskAPI = {
+  assessments: (params?: any) => privacyBff.get("/api/v1/privacy-risk/assessments", { params }),
+  get: (id: string) => privacyBff.get(`/api/v1/privacy-risk/assessments/${id}`),
+  heatmap: () => privacyBff.get("/api/v1/privacy-risk/heatmap"),
+  trends: () => privacyBff.get("/api/v1/privacy-risk/trends"),
+  stats: () => privacyBff.get("/api/v1/privacy-risk/stats"),
+};
+
+// --- Privacy Audit ---
+export const privacyAuditAPI = {
+  entries: (params?: any) => privacyBff.get("/api/v1/audit/entries", { params }),
+  timeline: (days?: number) => privacyBff.get("/api/v1/audit/timeline", { params: { days } }),
+  byUser: (userId: string) => privacyBff.get("/api/v1/audit/entries", { params: { userId } }),
+};
+
+// --- Privacy Compliance ---
+export const privacyComplianceAPI = {
+  stats: () => privacyBff.get("/api/v1/compliance/stats"),
+  frameworks: () => privacyBff.get("/api/v1/compliance/frameworks"),
+  trends: () => privacyBff.get("/api/v1/compliance/trends"),
+};
+
 export default api;
