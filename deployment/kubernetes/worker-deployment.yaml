@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dspm-worker
+  namespace: dspm
+  labels:
+    app: dspm-worker
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: dspm-worker
+  template:
+    metadata:
+      labels:
+        app: dspm-worker
+    spec:
+      containers:
+        - name: worker
+          image: techd/dspm-worker:latest
+          envFrom:
+            - secretRef:
+                name: dspm-secrets
+            - configMapRef:
+                name: dspm-config
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dspm-worker-hpa
+  namespace: dspm
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dspm-worker
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

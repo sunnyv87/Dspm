@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  # --- Infrastructure ---
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dspm
+      POSTGRES_PASSWORD: dspm
+      POSTGRES_DB: dspm
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dspm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  # --- Backend API ---
+  backend:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      DSPM_DATABASE_URL: postgresql+asyncpg://dspm:dspm@postgres:5432/dspm
+      DSPM_REDIS_URL: redis://redis:6379/0
+      DSPM_CELERY_BROKER_URL: redis://redis:6379/1
+      DSPM_CELERY_RESULT_BACKEND: redis://redis:6379/2
+      DSPM_ELASTICSEARCH_URL: http://elasticsearch:9200
+      DSPM_CORS_ORIGINS: '["http://localhost:3000"]'
+      DSPM_DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # --- Celery Workers ---
+  worker:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.worker
+    environment:
+      DSPM_DATABASE_URL: postgresql+asyncpg://dspm:dspm@postgres:5432/dspm
+      DSPM_REDIS_URL: redis://redis:6379/0
+      DSPM_CELERY_BROKER_URL: redis://redis:6379/1
+      DSPM_CELERY_RESULT_BACKEND: redis://redis:6379/2
+      DSPM_ELASTICSEARCH_URL: http://elasticsearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 2
+
+  # --- Frontend ---
+  frontend:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  es_data:

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dspm-backend
+  namespace: dspm
+  labels:
+    app: dspm-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dspm-backend
+  template:
+    metadata:
+      labels:
+        app: dspm-backend
+    spec:
+      containers:
+        - name: backend
+          image: techd/dspm-backend:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: dspm-secrets
+            - configMapRef:
+                name: dspm-config
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dspm-backend
+  namespace: dspm
+spec:
+  selector:
+    app: dspm-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP

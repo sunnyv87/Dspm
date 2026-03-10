@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dspm-config
+  namespace: dspm
+data:
+  DSPM_APP_NAME: "TechD DSPM"
+  DSPM_DEBUG: "false"
+  DSPM_LOG_LEVEL: "INFO"
+  DSPM_MAX_SCAN_WORKERS: "10"
+  DSPM_SCAN_SAMPLE_SIZE: "1000"
+  DSPM_MAX_FILE_SIZE_MB: "100"
+  DSPM_CORS_ORIGINS: '["https://dspm.techd.com"]'
+  DSPM_ELASTICSEARCH_URL: "http://elasticsearch.dspm.svc.cluster.local:9200"
+  DSPM_REDIS_URL: "redis://redis.dspm.svc.cluster.local:6379/0"
+  DSPM_CELERY_BROKER_URL: "redis://redis.dspm.svc.cluster.local:6379/1"
+  DSPM_CELERY_RESULT_BACKEND: "redis://redis.dspm.svc.cluster.local:6379/2"
