@@ -40,6 +40,14 @@ class IdentityAccessService:
         await self.db.flush()
         return perm
 
+    async def get_identity(self, identity_id: UUID, org_id: UUID = None) -> Optional[IdentityRecord]:
+        """Get an identity record with optional tenant isolation."""
+        query = select(IdentityRecord).where(IdentityRecord.id == identity_id)
+        if org_id:
+            query = query.where(IdentityRecord.org_id == org_id)
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
     async def get_asset_access_summary(self, asset_id: UUID) -> dict:
         """Who can access this asset?"""
         perms = await self.db.execute(

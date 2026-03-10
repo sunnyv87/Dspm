@@ -74,8 +74,11 @@ async def _execute_scan_async(scan_job_id: str, connector_id: str, org_id: str):
                 try:
                     id_svc = IdentityAccessService(session)
                     access_summary = await id_svc.get_asset_access_summary(asset.id)
-                except Exception:
-                    pass
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "Failed to get access summary for asset %s: %s", asset.id, e
+                    )
 
                 await risk_svc.calculate_risk_score(asset, access_summary)
 

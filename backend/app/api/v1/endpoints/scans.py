@@ -26,7 +26,6 @@ async def create_scan(
         scan_type=data.scan_type,
         config=data.config,
     )
-    # TODO: Dispatch to Celery worker for async execution
     return job
 
 
@@ -47,7 +46,7 @@ async def get_scan(
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
-    job = await service.get_scan_job(job_id)
+    job = await service.get_scan_job(job_id, org_id=current_user["org_id"])
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan job not found")
     return job
@@ -60,7 +59,7 @@ async def pause_scan(
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
-    success = await service.pause_scan(job_id)
+    success = await service.pause_scan(job_id, org_id=current_user["org_id"])
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot pause this scan")
     return {"status": "paused"}
@@ -73,7 +72,7 @@ async def cancel_scan(
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
-    success = await service.cancel_scan(job_id)
+    success = await service.cancel_scan(job_id, org_id=current_user["org_id"])
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot cancel this scan")
     return {"status": "cancelled"}
@@ -86,4 +85,8 @@ async def get_scan_assets(
     db: AsyncSession = Depends(get_db),
 ):
     service = ScanService(db)
+    # Verify the scan job belongs to the user's org first
+    job = await service.get_scan_job(job_id, org_id=current_user["org_id"])
+    if not job:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan job not found")
     return await service.get_discovered_assets(job_id)

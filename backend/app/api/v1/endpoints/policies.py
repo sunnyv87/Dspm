@@ -34,7 +34,17 @@ async def create_rule(
     db: AsyncSession = Depends(get_db),
 ):
     service = PolicyComplianceService(db)
-    rule = await service.create_policy_rule(current_user["org_id"], data.model_dump())
+    # Build from explicit fields only (prevents mass assignment)
+    rule = await service.create_policy_rule(current_user["org_id"], {
+        "name": data.name,
+        "description": data.description,
+        "framework_id": data.framework_id,
+        "severity": data.severity,
+        "condition": data.condition,
+        "control_mapping": data.control_mapping,
+        "remediation_suggestion": data.remediation_suggestion,
+        "continuous_monitoring": data.continuous_monitoring,
+    })
     return rule
 
 
@@ -55,6 +65,10 @@ async def approve_exception(
     db: AsyncSession = Depends(get_db),
 ):
     service = PolicyComplianceService(db)
+    # Verify violation belongs to this org
+    violation = await service.get_violation(data.violation_id, org_id=current_user["org_id"])
+    if not violation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Violation not found")
     await service.approve_exception(data.violation_id, current_user["user_id"], data.reason)
     return {"status": "exception approved"}
 

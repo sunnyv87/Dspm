@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -32,9 +32,15 @@ async def create_report(
     db: AsyncSession = Depends(get_db),
 ):
     service = ReportingService(db)
-    report_data = data.model_dump()
-    report_data["generated_by"] = current_user["user_id"]
-    report = await service.create_report(current_user["org_id"], report_data)
+    # Build from explicit fields only (prevents mass assignment)
+    report = await service.create_report(current_user["org_id"], {
+        "report_type": data.report_type,
+        "name": data.name,
+        "description": data.description,
+        "format": data.format,
+        "filters": data.filters,
+        "generated_by": current_user["user_id"],
+    })
     return report
 
 
@@ -54,7 +60,9 @@ async def get_report(
     db: AsyncSession = Depends(get_db),
 ):
     service = ReportingService(db)
-    report = await service.get_report(report_id)
+    report = await service.get_report(report_id, org_id=current_user["org_id"])
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
     return report
 
 

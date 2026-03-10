@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_role
 from app.core.database import get_db
 from app.models.inventory import ExposureStatus
 from app.schemas.inventory import AssetResponse, AssetFilter, AssetUpdateOwner, AssetTagCreate
@@ -92,7 +92,7 @@ async def get_asset(
     db: AsyncSession = Depends(get_db),
 ):
     service = AssetInventoryService(db)
-    asset = await service.get_asset(asset_id)
+    asset = await service.get_asset(asset_id, org_id=current_user["org_id"])
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
     return asset
@@ -102,17 +102,18 @@ async def get_asset(
 async def update_owner(
     asset_id: UUID,
     data: AssetUpdateOwner,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("super_admin", "org_admin", "data_owner")),
     db: AsyncSession = Depends(get_db),
 ):
     service = AssetInventoryService(db)
-    asset = await service.get_asset(asset_id)
+    asset = await service.get_asset(asset_id, org_id=current_user["org_id"])
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
-    if data.business_owner:
+    if data.business_owner is not None:
         asset.business_owner = data.business_owner
-    if data.technical_owner:
+    if data.technical_owner is not None:
         asset.technical_owner = data.technical_owner
+    await db.flush()
     return {"status": "updated"}
 
 
@@ -120,9 +121,12 @@ async def update_owner(
 async def add_tag(
     asset_id: UUID,
     data: AssetTagCreate,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("super_admin", "org_admin", "security_analyst", "data_owner")),
     db: AsyncSession = Depends(get_db),
 ):
     service = AssetInventoryService(db)
+    asset = await service.get_asset(asset_id, org_id=current_user["org_id"])
+    if not asset:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
     tag = await service.add_tag(asset_id, data.key, data.value)
     return {"id": tag.id, "key": tag.key, "value": tag.value}

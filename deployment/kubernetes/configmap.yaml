@@ -4,6 +4,7 @@ metadata:
   name: dspm-config
   namespace: dspm
 data:
+  # Non-sensitive configuration only — credentials belong in Secrets
   DSPM_APP_NAME: "TechD DSPM"
   DSPM_DEBUG: "false"
   DSPM_LOG_LEVEL: "INFO"
@@ -11,7 +12,20 @@ data:
   DSPM_SCAN_SAMPLE_SIZE: "1000"
   DSPM_MAX_FILE_SIZE_MB: "100"
   DSPM_CORS_ORIGINS: '["https://dspm.techd.com"]'
-  DSPM_ELASTICSEARCH_URL: "http://elasticsearch.dspm.svc.cluster.local:9200"
-  DSPM_REDIS_URL: "redis://redis.dspm.svc.cluster.local:6379/0"
-  DSPM_CELERY_BROKER_URL: "redis://redis.dspm.svc.cluster.local:6379/1"
-  DSPM_CELERY_RESULT_BACKEND: "redis://redis.dspm.svc.cluster.local:6379/2"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dspm-secrets
+  namespace: dspm
+type: Opaque
+stringData:
+  # IMPORTANT: Replace all placeholder values before deploying.
+  # Use: kubectl create secret generic dspm-secrets --from-literal=DSPM_SECRET_KEY=$(openssl rand -hex 32) ...
+  DSPM_SECRET_KEY: "REPLACE_ME_generate_with_openssl_rand_hex_32"
+  DSPM_CREDENTIAL_ENCRYPTION_KEY: "REPLACE_ME_generate_with_python_fernet"
+  DSPM_DATABASE_URL: "postgresql+asyncpg://dspm:REPLACE_PASSWORD@postgres.dspm.svc.cluster.local:5432/dspm"
+  DSPM_REDIS_URL: "redis://:REPLACE_PASSWORD@redis.dspm.svc.cluster.local:6379/0"
+  DSPM_CELERY_BROKER_URL: "redis://:REPLACE_PASSWORD@redis.dspm.svc.cluster.local:6379/1"
+  DSPM_CELERY_RESULT_BACKEND: "redis://:REPLACE_PASSWORD@redis.dspm.svc.cluster.local:6379/2"
+  DSPM_ELASTICSEARCH_URL: "https://elastic:REPLACE_PASSWORD@elasticsearch.dspm.svc.cluster.local:9200"

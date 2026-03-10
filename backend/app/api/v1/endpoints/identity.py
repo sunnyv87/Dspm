@@ -12,6 +12,7 @@ from app.schemas.identity import (
     AccessFindingResponse, AssetAccessSummary,
 )
 from app.services.identity.service import IdentityAccessService
+from app.services.inventory.service import AssetInventoryService
 
 router = APIRouter(prefix="/identity", tags=["Identity & Access"])
 
@@ -22,6 +23,11 @@ async def get_asset_access(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Verify asset belongs to user's org
+    inv_service = AssetInventoryService(db)
+    asset = await inv_service.get_asset(asset_id, org_id=current_user["org_id"])
+    if not asset:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
     service = IdentityAccessService(db)
     return await service.get_asset_access_summary(asset_id)
 
@@ -33,6 +39,10 @@ async def get_identity_sensitive_assets(
     db: AsyncSession = Depends(get_db),
 ):
     service = IdentityAccessService(db)
+    # Verify identity belongs to user's org
+    identity = await service.get_identity(identity_id, org_id=current_user["org_id"])
+    if not identity:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Identity not found")
     assets = await service.get_identity_sensitive_assets(identity_id)
     return {"identity_id": identity_id, "sensitive_assets_count": len(assets), "assets": assets}
 

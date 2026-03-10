@@ -127,6 +127,14 @@ class PolicyComplianceService:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
+    async def get_violation(self, violation_id: UUID, org_id: UUID = None) -> Optional[PolicyViolation]:
+        """Get a violation with optional tenant isolation."""
+        query = select(PolicyViolation).where(PolicyViolation.id == violation_id)
+        if org_id:
+            query = query.where(PolicyViolation.org_id == org_id)
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
     async def approve_exception(self, violation_id: UUID, approver_id: UUID, reason: str):
         await self.db.execute(
             update(PolicyViolation)

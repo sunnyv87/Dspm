@@ -5,15 +5,47 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/a
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
+
+/**
+ * Token storage using secure cookies instead of localStorage.
+ * Cookies are set with SameSite=Strict and Secure (in production) flags
+ * to mitigate XSS token theft and CSRF attacks.
+ */
+function getSecureCookieOptions(): string {
+  const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
+  const parts = ["path=/", "SameSite=Strict"];
+  if (isSecure) {
+    parts.push("Secure");
+  }
+  return parts.join("; ");
+}
+
+export function setToken(token: string): void {
+  if (typeof document !== "undefined") {
+    const maxAge = 3600; // 1 hour — matches typical JWT expiry
+    document.cookie = `dspm_token=${encodeURIComponent(token)}; max-age=${maxAge}; ${getSecureCookieOptions()}`;
+  }
+}
+
+export function getToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)dspm_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+export function clearToken(): void {
+  if (typeof document !== "undefined") {
+    document.cookie = `dspm_token=; max-age=0; ${getSecureCookieOptions()}`;
+  }
+}
 
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("dspm_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -23,7 +55,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("dspm_token");
+      clearToken();
       window.location.href = "/login";
     }
     return Promise.reject(error);

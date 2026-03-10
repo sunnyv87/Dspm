@@ -9,6 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.discovery import ScanJob, ScanStatus, DiscoveredAsset
 
+# Allowlisted fields for discovered asset creation (prevents mass assignment)
+_ALLOWED_ASSET_FIELDS = {
+    "asset_type", "name", "path", "parent_path", "size_bytes",
+    "file_extension", "owner", "region", "tags", "encryption_status",
+    "created_date", "last_modified_date",
+}
+
 
 class ScanService:
     def __init__(self, db: AsyncSession):
@@ -25,8 +32,12 @@ class ScanService:
         await self.db.flush()
         return job
 
-    async def get_scan_job(self, job_id: UUID) -> Optional[ScanJob]:
-        result = await self.db.execute(select(ScanJob).where(ScanJob.id == job_id))
+    async def get_scan_job(self, job_id: UUID, org_id: UUID = None) -> Optional[ScanJob]:
+        """Get a scan job with optional tenant isolation."""
+        query = select(ScanJob).where(ScanJob.id == job_id)
+        if org_id:
+            query = query.where(ScanJob.org_id == org_id)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def list_scan_jobs(self, org_id: UUID, connector_id: UUID = None) -> list[ScanJob]:
@@ -59,22 +70,24 @@ class ScanService:
             )
         )
 
-    async def pause_scan(self, job_id: UUID) -> bool:
-        job = await self.get_scan_job(job_id)
+    async def pause_scan(self, job_id: UUID, org_id: UUID) -> bool:
+        job = await self.get_scan_job(job_id, org_id=org_id)
         if job and job.status == ScanStatus.RUNNING:
             await self.update_scan_status(job_id, ScanStatus.PAUSED)
             return True
         return False
 
-    async def cancel_scan(self, job_id: UUID) -> bool:
-        job = await self.get_scan_job(job_id)
+    async def cancel_scan(self, job_id: UUID, org_id: UUID) -> bool:
+        job = await self.get_scan_job(job_id, org_id=org_id)
         if job and job.status in (ScanStatus.RUNNING, ScanStatus.PAUSED, ScanStatus.QUEUED):
             await self.update_scan_status(job_id, ScanStatus.CANCELLED)
             return True
         return False
 
     async def add_discovered_asset(self, scan_job_id: UUID, asset_data: dict) -> DiscoveredAsset:
-        asset = DiscoveredAsset(scan_job_id=scan_job_id, **asset_data)
+        # Filter to allowed fields only (prevents mass assignment)
+        safe_data = {k: v for k, v in asset_data.items() if k in _ALLOWED_ASSET_FIELDS}
+        asset = DiscoveredAsset(scan_job_id=scan_job_id, **safe_data)
         self.db.add(asset)
         await self.db.flush()
         return asset

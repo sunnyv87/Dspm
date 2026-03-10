@@ -8,8 +8,11 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token
+from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, validate_password_strength
 from app.models.admin import User, Role, Organization, APIToken, SystemRole
+
+# Dummy hash for constant-time comparison when user not found (prevents timing attacks)
+_DUMMY_HASH = hash_password("dummy-password-for-timing-safety")
 
 
 class AdminService:
@@ -29,6 +32,11 @@ class AdminService:
 
     # --- User ---
     async def create_user(self, org_id: UUID, email: str, password: str = None, full_name: str = None, role: SystemRole = SystemRole.READ_ONLY) -> User:
+        if password:
+            errors = validate_password_strength(password)
+            if errors:
+                raise ValueError(f"Weak password: {'; '.join(errors)}")
+
         user = User(
             org_id=org_id,
             email=email,
@@ -47,8 +55,16 @@ class AdminService:
     async def authenticate(self, email: str, password: str) -> Optional[dict]:
         result = await self.db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
+
         if not user or not user.hashed_password:
+            # Perform a dummy password check to prevent timing-based user enumeration
+            verify_password(password, _DUMMY_HASH)
             return None
+
+        if not user.is_active:
+            verify_password(password, _DUMMY_HASH)
+            return None
+
         if not verify_password(password, user.hashed_password):
             return None
 
@@ -65,8 +81,11 @@ class AdminService:
             "token_type": "bearer",
         }
 
-    async def get_user(self, user_id: UUID) -> Optional[User]:
-        result = await self.db.execute(select(User).where(User.id == user_id))
+    async def get_user(self, user_id: UUID, org_id: UUID = None) -> Optional[User]:
+        query = select(User).where(User.id == user_id)
+        if org_id:
+            query = query.where(User.org_id == org_id)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
@@ -79,8 +98,9 @@ class AdminService:
         )
         return list(result.scalars().all())
 
-    async def deactivate_user(self, user_id: UUID):
-        user = await self.get_user(user_id)
+    async def deactivate_user(self, user_id: UUID, org_id: UUID):
+        """Deactivate a user. Requires org_id for tenant isolation."""
+        user = await self.get_user(user_id, org_id=org_id)
         if user:
             user.is_active = False
             await self.db.flush()
@@ -129,8 +149,11 @@ class AdminService:
         )
         return list(result.scalars().all())
 
-    async def revoke_api_token(self, token_id: UUID):
-        result = await self.db.execute(select(APIToken).where(APIToken.id == token_id))
+    async def revoke_api_token(self, token_id: UUID, org_id: UUID):
+        """Revoke an API token. Requires org_id for tenant isolation."""
+        result = await self.db.execute(
+            select(APIToken).where(APIToken.id == token_id, APIToken.org_id == org_id)
+        )
         token = result.scalar_one_or_none()
         if token:
             token.is_active = False

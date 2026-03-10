@@ -85,8 +85,12 @@ class ReportingService:
         await self.db.flush()
         return report
 
-    async def get_report(self, report_id: UUID) -> Report:
-        result = await self.db.execute(select(Report).where(Report.id == report_id))
+    async def get_report(self, report_id: UUID, org_id: UUID = None) -> Report:
+        """Get a report with optional tenant isolation."""
+        query = select(Report).where(Report.id == report_id)
+        if org_id:
+            query = query.where(Report.org_id == org_id)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def list_reports(self, org_id: UUID) -> list[Report]:

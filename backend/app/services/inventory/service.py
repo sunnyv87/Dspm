@@ -39,8 +39,12 @@ class AssetInventoryService:
         await self.db.flush()
         return asset
 
-    async def get_asset(self, asset_id: UUID) -> Optional[Asset]:
-        result = await self.db.execute(select(Asset).where(Asset.id == asset_id))
+    async def get_asset(self, asset_id: UUID, org_id: UUID = None) -> Optional[Asset]:
+        """Get an asset with optional tenant isolation."""
+        query = select(Asset).where(Asset.id == asset_id)
+        if org_id:
+            query = query.where(Asset.org_id == org_id)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def list_assets(self, org_id: UUID, filters: AssetFilter) -> tuple[list[Asset], int]:

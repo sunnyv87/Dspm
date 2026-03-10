@@ -112,6 +112,19 @@ class ClassificationService:
         )
         return list(result.scalars().all())
 
+    async def get_result_by_id(self, result_id: UUID, org_id: UUID = None):
+        """Get a classification result with optional tenant isolation via asset org_id."""
+        from app.models.inventory import Asset
+        query = (
+            select(ClassificationResult)
+            .join(Asset, ClassificationResult.asset_id == Asset.id)
+            .where(ClassificationResult.id == result_id)
+        )
+        if org_id:
+            query = query.where(Asset.org_id == org_id)
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
     async def seed_builtin_rules(self):
         """Seed built-in classification rules for common data types."""
         for category, pattern in BUILTIN_PATTERNS.items():

@@ -41,7 +41,7 @@ async def get_alert(
     db: AsyncSession = Depends(get_db),
 ):
     service = AlertingService(db)
-    alert = await service.get_alert(alert_id)
+    alert = await service.get_alert(alert_id, org_id=current_user["org_id"])
     if not alert:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
     return alert
@@ -51,10 +51,13 @@ async def get_alert(
 async def update_alert_status(
     alert_id: UUID,
     data: AlertUpdateStatus,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("super_admin", "org_admin", "security_analyst")),
     db: AsyncSession = Depends(get_db),
 ):
     service = AlertingService(db)
+    alert = await service.get_alert(alert_id, org_id=current_user["org_id"])
+    if not alert:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
     await service.update_status(alert_id, data.status, current_user["user_id"], data.comment)
     return {"status": "updated"}
 
@@ -63,10 +66,13 @@ async def update_alert_status(
 async def assign_alert(
     alert_id: UUID,
     data: AlertAssign,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("super_admin", "org_admin", "security_analyst")),
     db: AsyncSession = Depends(get_db),
 ):
     service = AlertingService(db)
+    alert = await service.get_alert(alert_id, org_id=current_user["org_id"])
+    if not alert:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
     await service.assign_alert(alert_id, data.assigned_to)
     return {"status": "assigned"}
 
@@ -79,6 +85,9 @@ async def add_comment(
     db: AsyncSession = Depends(get_db),
 ):
     service = AlertingService(db)
+    alert = await service.get_alert(alert_id, org_id=current_user["org_id"])
+    if not alert:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
     comment = await service.add_comment(alert_id, current_user["user_id"], data.comment)
     return {"id": comment.id, "comment": comment.comment}
 
@@ -86,11 +95,22 @@ async def add_comment(
 @router.post("/remediation", response_model=RemediationTaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_remediation_task(
     data: RemediationTaskCreate,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_role("super_admin", "org_admin", "security_analyst")),
     db: AsyncSession = Depends(get_db),
 ):
     service = AlertingService(db)
-    task_data = data.model_dump()
-    task_data["org_id"] = current_user["org_id"]
-    task = await service.create_remediation_task(task_data)
+    # Verify the alert belongs to this org
+    alert = await service.get_alert(data.alert_id, org_id=current_user["org_id"])
+    if not alert:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
+    # Build task data from explicit fields only (prevents mass assignment)
+    task = await service.create_remediation_task({
+        "alert_id": data.alert_id,
+        "title": data.title,
+        "description": data.description,
+        "action_type": data.action_type,
+        "assigned_to": data.assigned_to,
+        "due_at": data.due_at,
+        "org_id": current_user["org_id"],
+    })
     return task

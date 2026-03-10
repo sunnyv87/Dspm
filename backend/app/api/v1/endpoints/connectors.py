@@ -43,7 +43,7 @@ async def get_connector(
     db: AsyncSession = Depends(get_db),
 ):
     service = ConnectorService(db)
-    connector = await service.get_connector(connector_id)
+    connector = await service.get_connector(connector_id, current_user["org_id"])
     if not connector:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connector not found")
     return connector
@@ -57,7 +57,7 @@ async def update_connector(
     db: AsyncSession = Depends(get_db),
 ):
     service = ConnectorService(db)
-    connector = await service.update_connector(connector_id, data)
+    connector = await service.update_connector(connector_id, current_user["org_id"], data)
     if not connector:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connector not found")
     return connector
@@ -70,7 +70,7 @@ async def delete_connector(
     db: AsyncSession = Depends(get_db),
 ):
     service = ConnectorService(db)
-    deleted = await service.delete_connector(connector_id)
+    deleted = await service.delete_connector(connector_id, current_user["org_id"])
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connector not found")
 
@@ -92,7 +92,7 @@ async def get_health(
     db: AsyncSession = Depends(get_db),
 ):
     service = ConnectorService(db)
-    health = await service.get_health(connector_id)
+    health = await service.get_health(connector_id, current_user["org_id"])
     if not health:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connector not found")
     return health

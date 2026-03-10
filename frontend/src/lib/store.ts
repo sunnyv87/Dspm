@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { getToken, setToken, clearToken } from "./api";
 
 interface AuthState {
   token: string | null;
@@ -8,14 +9,14 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: typeof window !== "undefined" ? localStorage.getItem("dspm_token") : null,
+  token: getToken(),
   user: null,
   setAuth: (token, user) => {
-    localStorage.setItem("dspm_token", token);
+    setToken(token);
     set({ token, user });
   },
   logout: () => {
-    localStorage.removeItem("dspm_token");
+    clearToken();
     set({ token: null, user: null });
   },
 }));

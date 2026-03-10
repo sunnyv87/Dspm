@@ -43,8 +43,12 @@ class AlertingService:
         await self.db.flush()
         return alert
 
-    async def get_alert(self, alert_id: UUID) -> Optional[Alert]:
-        result = await self.db.execute(select(Alert).where(Alert.id == alert_id))
+    async def get_alert(self, alert_id: UUID, org_id: UUID = None) -> Optional[Alert]:
+        """Get an alert with optional tenant isolation."""
+        query = select(Alert).where(Alert.id == alert_id)
+        if org_id:
+            query = query.where(Alert.org_id == org_id)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def list_alerts(self, org_id: UUID, filters: AlertFilter) -> tuple[list[Alert], int]:

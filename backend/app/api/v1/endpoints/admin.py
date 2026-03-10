@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, require_role
 from app.core.database import get_db
+from app.core.security import validate_password_strength
 from app.schemas.admin import (
     UserCreate, UserResponse, OrganizationCreate, OrganizationResponse,
     RoleResponse, APITokenCreate, APITokenResponse,
@@ -35,6 +36,13 @@ async def create_user(
     existing = await service.get_user_by_email(data.email)
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
+
+    # Enforce password complexity
+    if data.password:
+        password_errors = validate_password_strength(data.password)
+        if password_errors:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=password_errors)
+
     user = await service.create_user(
         org_id=current_user["org_id"],
         email=data.email,
@@ -52,7 +60,7 @@ async def get_user(
     db: AsyncSession = Depends(get_db),
 ):
     service = AdminService(db)
-    user = await service.get_user(user_id)
+    user = await service.get_user(user_id, org_id=current_user["org_id"])
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
@@ -65,7 +73,7 @@ async def deactivate_user(
     db: AsyncSession = Depends(get_db),
 ):
     service = AdminService(db)
-    await service.deactivate_user(user_id)
+    await service.deactivate_user(user_id, org_id=current_user["org_id"])
 
 
 @router.get("/roles", response_model=list[RoleResponse])
@@ -110,4 +118,4 @@ async def revoke_token(
     db: AsyncSession = Depends(get_db),
 ):
     service = AdminService(db)
-    await service.revoke_api_token(token_id)
+    await service.revoke_api_token(token_id, org_id=current_user["org_id"])
