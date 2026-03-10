@@ -1,6 +1,6 @@
 # TechD DSPM — Application User Guide
 
-> **Version:** 1.0 | **Last Updated:** March 2026
+> **Version:** 1.1 | **Last Updated:** March 2026
 >
 > A complete guide to using the TechD Data Security Posture Management platform — from first login through daily operations, compliance monitoring, and executive reporting.
 
@@ -62,8 +62,14 @@
     - [Role-Based Access Control](#122-role-based-access-control)
     - [API Token Management](#123-api-token-management)
     - [Audit Logs](#124-audit-logs)
-13. [Keyboard Shortcuts & Tips](#13-keyboard-shortcuts--tips)
-14. [Troubleshooting](#14-troubleshooting)
+13. [AI Security Assistant](#13-ai-security-assistant)
+    - [Overview & Data Residency](#131-overview--data-residency)
+    - [Getting Started with AI Queries](#132-getting-started-with-ai-queries)
+    - [Query Categories & Examples](#133-query-categories--examples)
+    - [Understanding Responses](#134-understanding-responses)
+    - [Follow-Up Queries](#135-follow-up-queries)
+14. [Keyboard Shortcuts & Tips](#14-keyboard-shortcuts--tips)
+15. [Troubleshooting](#15-troubleshooting)
 
 ---
 
@@ -135,13 +141,12 @@ After logging in, the main application layout appears with a left sidebar and a 
 │  DSPM      │                                                 │
 │  ────────  │  Displays the active page content:              │
 │            │  Dashboard, Connectors, Assets, Alerts,         │
-│  ◉ Dashboard│  or Compliance                                 │
+│  ◉ Dashboard│  Compliance, or AI Assistant                   │
 │  ○ Connectors│                                               │
 │  ○ Assets  │                                                 │
 │  ○ Alerts  │                                                 │
 │  ○ Compliance│                                               │
-│            │                                                 │
-│            │                                                 │
+│  ○ AI Assist│                                                │
 │            │                                                 │
 │            │                                                 │
 │            │                                                 │
@@ -159,6 +164,7 @@ After logging in, the main application layout appears with a left sidebar and a 
 | Database | **Asset Inventory** | Browse and manage discovered assets |
 | Bell | **Alerts** | Security alerts and remediation workflow |
 | Shield | **Compliance** | Compliance coverage and policy violations |
+| Sparkles | **AI Assistant** | Natural language query interface for CISO reporting |
 
 Click any item in the sidebar to navigate. The active page is highlighted. Click **Sign Out** at the bottom to end your session.
 
@@ -964,7 +970,218 @@ Every action in the platform is logged (requires `auditor`, `org_admin`, or `sup
 
 ---
 
-## 13. Keyboard Shortcuts & Tips
+## 13. AI Security Assistant
+
+The AI Security Assistant provides a **natural language query interface** that lets CISOs and security teams ask questions about their security posture in plain English. It translates questions into internal database queries and returns structured, actionable reports.
+
+> **Data Residency Guarantee:** All query processing happens locally within your infrastructure. No data is sent to external AI services, third-party APIs, or cloud-based LLMs. The engine uses rule-based NLP pattern matching that runs entirely on your backend server.
+
+### 13.1 Overview & Data Residency
+
+Navigate to **AI Assistant** in the sidebar (sparkles icon).
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│  ✦ AI Security Assistant                          [● Data stays local] │
+│                                                                         │
+│  Ask questions about your security posture in plain English.            │
+│  All processing stays on-premise.                                       │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │                                                                 │    │
+│  │           ✦                                                     │    │
+│  │                                                                 │    │
+│  │     Ask me anything about your security posture                 │    │
+│  │                                                                 │    │
+│  │     I can answer questions about risk, alerts, compliance,      │    │
+│  │     data exposure, identity access, and more. All data is       │    │
+│  │     processed locally — nothing leaves your cloud.              │    │
+│  │                                                                 │    │
+│  │  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │    │
+│  │  │Executive Overview│ │Risk & Threats   │ │Data Exposure    │   │    │
+│  │  │                 │ │                 │ │                 │   │    │
+│  │  │ What is our     │ │ Show me all     │ │ Are any assets  │   │    │
+│  │  │ overall posture?│ │ critical alerts │ │ publicly exposed│   │    │
+│  │  │                 │ │                 │ │                 │   │    │
+│  │  │ Give me an      │ │ What is our     │ │ Show me shadow  │   │    │
+│  │  │ exec summary    │ │ risk trend?     │ │ data stores     │   │    │
+│  │  └─────────────────┘ └─────────────────┘ └─────────────────┘   │    │
+│  │                                                                 │    │
+│  │  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │    │
+│  │  │Compliance       │ │Identity & Access│ │Infrastructure   │   │    │
+│  │  │                 │ │                 │ │                 │   │    │
+│  │  │ GDPR compliance │ │ Any excessive   │ │ Are all         │   │    │
+│  │  │ status?         │ │ access findings?│ │ connectors OK?  │   │    │
+│  │  │                 │ │                 │ │                 │   │    │
+│  │  │ Show policy     │ │ Show toxic      │ │ When was the    │   │    │
+│  │  │ violations      │ │ permissions     │ │ last scan?      │   │    │
+│  │  └─────────────────┘ └─────────────────┘ └─────────────────┘   │    │
+│  │                                                                 │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────┐  [Ask] │
+│  │ Ask about your security posture...                          │        │
+│  └─────────────────────────────────────────────────────────────┘        │
+│                                                                         │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**How it works (all on-premise):**
+
+1. You type a question in plain English
+2. The backend parses your query using rule-based NLP (regex pattern matching + entity extraction)
+3. The detected intent is mapped to internal database queries
+4. Results are formatted into a CISO-friendly narrative with structured data
+5. The response is displayed with rich visualizations (tables, charts, badges)
+
+**No external calls are made at any point.** The NLP engine, database queries, and response formatting all execute within your infrastructure.
+
+### 13.2 Getting Started with AI Queries
+
+Click any suggested query on the welcome screen, or type your own question in the input box.
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│  ✦ AI Security Assistant                          [● Data stays local] │
+│                                                                         │
+│                           ┌──────────────────────────────────────┐      │
+│                           │ What is our overall security posture?│      │
+│                           └──────────────────────────────────────┘      │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ Across 1,247 scanned data assets, 342 contain sensitive data.   │   │
+│  │ 28 assets are at critical risk level and require immediate      │   │
+│  │ attention. **12 sensitive assets are publicly exposed** — this  │   │
+│  │ is the highest priority to remediate. There are 59 open alerts  │   │
+│  │ (5 critical).                                                   │   │
+│  │                                                                 │   │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │   │
+│  │  │  1,247   │ │   342    │ │    28    │ │    12    │          │   │
+│  │  │  Total   │ │ Sensitive│ │ Critical │ │ Exposed  │          │   │
+│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │   │
+│  │                                                                 │   │
+│  │  █████████████████████████████████████████████████               │   │
+│  │  ■ Critical: 28  ■ High: 67  ■ Medium: 185  ■ Low: 967        │   │
+│  │                                                                 │   │
+│  │  Top Risky Data Stores                                          │   │
+│  │  prod-customer-db       ████████████████████ 95                 │   │
+│  │  s3-public-reports      ██████████████████   88                 │   │
+│  │  analytics-warehouse    ████████████████     82                 │   │
+│  │                                                                 │   │
+│  │  ┌──────────────────────────────────────────────────────┐       │   │
+│  │  │ Recommended Actions                                  │       │   │
+│  │  │ • URGENT: Revoke public access on 12 exposed assets  │       │   │
+│  │  │ • Address 5 critical alerts within 24 hours          │       │   │
+│  │  │ • Review 28 critical-risk assets for encryption      │       │   │
+│  │  └──────────────────────────────────────────────────────┘       │   │
+│  │                                                                 │   │
+│  │  Follow-up:                                                     │   │
+│  │  [Show me all critical alerts]  [Which assets are exposed?]     │   │
+│  │  [What is the risk trend this month?]                           │   │
+│  │                                                                 │   │
+│  │  executive_summary (90% confidence)                             │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────┐  [Ask] │
+│  │ Ask about your security posture...                          │        │
+│  └─────────────────────────────────────────────────────────────┘        │
+│                                                                         │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### 13.3 Query Categories & Examples
+
+The AI Assistant understands **25+ intent types** across 6 categories. You can phrase questions naturally — the engine recognizes many variations.
+
+| Category | Example Queries | What You Get |
+|----------|----------------|--------------|
+| **Executive Overview** | "What is our overall security posture?" | KPI metrics, risk distribution, top risky stores, recommendations |
+| | "Give me an executive summary" | |
+| | "How are we doing on risk?" | |
+| **Risk & Threats** | "Show me all critical alerts" | Filtered alert list with severity breakdown and remediation steps |
+| | "What is our risk trend this month?" | Risk score chart over time with trend direction |
+| | "Which assets are at critical risk?" | Asset table sorted by risk score |
+| **Data Exposure** | "Are any sensitive assets publicly exposed?" | Exposed assets with risk scores, sensitivity counts, owners |
+| | "Show me shadow data stores" | Unmanaged/untracked data stores |
+| | "Which assets have no owner?" | Unowned assets needing accountability assignment |
+| | "How many sensitive assets do we have?" | Sensitive asset inventory with classification breakdown |
+| **Compliance** | "What is our GDPR compliance status?" | Framework-specific coverage %, violation count, gap analysis |
+| | "Show all policy violations" | Violation list with severity, status, and affected assets |
+| | "How are we on DPDPA compliance?" | India-specific regulatory coverage |
+| | "What is our ISO 27001 coverage?" | Framework card with rules and violations |
+| **Identity & Access** | "Any excessive access findings?" | Permission issues: overly permissive, stale, toxic combinations |
+| | "Show toxic permission combinations" | Dangerous permission pairings detected |
+| | "Are there orphaned accounts?" | Accounts belonging to departed users |
+| **Infrastructure** | "Are all connectors healthy?" | Connector status table with error details |
+| | "When was the last scan?" | Latest scan progress, status, and object counts |
+| | "Which connectors are failing?" | Failed connectors with error messages |
+
+**Entity extraction — the engine understands context modifiers:**
+
+| Modifier | Examples | Effect |
+|----------|----------|--------|
+| **Severity** | "critical alerts", "high priority issues", "P1 incidents" | Filters by severity level |
+| **Status** | "open violations", "resolved alerts", "in progress" | Filters by status |
+| **Framework** | "GDPR", "SOC2", "DPDPA", "RBI", "PCI DSS" | Filters to specific framework |
+| **Environment** | "production assets", "staging data", "dev databases" | Filters by environment |
+| **Region** | "India data", "EU assets", "ap-south region" | Filters by geography |
+| **Limit** | "top 5 risky stores", "show first 10" | Limits result count |
+| **Format** | "export as PDF", "generate CSV report" | Specifies report format |
+
+### 13.4 Understanding Responses
+
+Every response includes:
+
+| Component | Description |
+|-----------|-------------|
+| **Narrative** | Plain English summary with bold highlights for critical information |
+| **Metrics** | Color-coded stat cards (blue, yellow, red) for key numbers |
+| **Distribution bars** | Visual risk/severity breakdown with color coding |
+| **Data tables** | Assets, alerts, violations, findings, or connectors as appropriate |
+| **Severity badges** | Color-coded pills: red (critical), orange (high), yellow (medium), green (low) |
+| **Trend charts** | Mini bar charts showing risk score over time |
+| **Framework cards** | Compliance coverage with progress bars and violation counts |
+| **Recommendations** | Prioritized action items in an amber highlight box |
+| **Confidence** | Intent classification confidence (shown at bottom of response) |
+| **Follow-up chips** | Clickable suggestions for the next logical question |
+
+**Response color coding:**
+
+| Color | Meaning |
+|-------|---------|
+| Red | Critical risk / critical severity — immediate action needed |
+| Orange | High risk / high severity — address within 24 hours |
+| Yellow | Medium risk — schedule for remediation |
+| Green | Low risk / healthy — maintain current controls |
+| Amber background | Recommended actions box |
+
+### 13.5 Follow-Up Queries
+
+After each response, the assistant suggests **contextual follow-up questions** as clickable chips. Click any chip to automatically send that query.
+
+**Follow-up flow examples:**
+
+```
+"What is our overall security posture?"
+  └→ "Show me all critical alerts"
+       └→ "Which assets are publicly exposed?"
+            └→ "What remediations are in progress?"
+
+"What is our compliance coverage?"
+  └→ "Show all policy violations"
+       └→ "Which assets have critical violations?"
+            └→ "Show risk summary"
+
+"Are all connectors healthy?"
+  └→ "When was the last scan?"
+       └→ "Show executive summary"
+```
+
+This guided flow helps CISOs drill down from high-level posture to specific issues without needing to know exact query syntax.
+
+---
+
+## 14. Keyboard Shortcuts & Tips
 
 **Navigation tips:**
 - Use the sidebar to switch between major sections
@@ -977,6 +1194,7 @@ Every action in the platform is logged (requires `auditor`, `org_admin`, or `sup
 - Review Critical/High alerts first — they represent the highest business impact
 - Assign owners to all assets to ensure accountability
 - Tag assets with business metadata for easier filtering and reporting
+- Use the **AI Assistant** to quickly query security posture in plain English — ideal for board prep and CISO briefs
 
 **API usage tips:**
 - Use API tokens for automated reporting and integration with SIEM/SOAR tools
@@ -986,7 +1204,7 @@ Every action in the platform is logged (requires `auditor`, `org_admin`, or `sup
 
 ---
 
-## 14. Troubleshooting
+## 15. Troubleshooting
 
 ### Login Issues
 
@@ -1014,6 +1232,15 @@ Every action in the platform is logged (requires `auditor`, `org_admin`, or `sup
 | Missing sensitive data | Check if classification rules are enabled. Verify the scan covered the relevant data stores. |
 | Risk score seems wrong | Risk scores consider exposure, encryption, access permissions, and data sensitivity. Review all contributing factors. |
 
+### AI Assistant Issues
+
+| Problem | Solution |
+|---------|----------|
+| "I couldn't determine the exact intent" | Rephrase your question using keywords from the suggested examples. The engine uses pattern matching — simpler phrasing works better. |
+| Low confidence score | Try more direct phrasing: "show critical alerts" instead of "I was wondering if there might be some alerts". |
+| No data in response | Ensure scans have been run and data exists. The AI queries the same database as the rest of the platform. |
+| Worried about data leaving infra | All processing is local. The "Data stays local" badge confirms no external API calls. The NLP engine is rule-based regex, not a cloud LLM. |
+
 ### General Issues
 
 | Problem | Solution |
@@ -1040,6 +1267,7 @@ Every action in the platform is logged (requires `auditor`, `org_admin`, or `sup
 │  □ Check publicly exposed assets      □ Audit stale/shadow data         │
 │  □ Review new scan results            □ Review unowned assets           │
 │  □ Update alert statuses              □ Generate executive report       │
+│  □ Ask AI: "What is our posture?"     □ Ask AI: "Risk trend this week?" │
 │                                                                         │
 │  MONTHLY TASKS                        ESCALATION PATH                   │
 │  ─────────────                        ───────────────                   │
